@@ -3,8 +3,6 @@
     <Palette class="palette-section" @addItemToPaper="addItemToPaper" />
     <div class="paper-section">
       <Paper :droppedItems="droppedItems" ref="paperRef" />
-      <!-- <button class="export-button" @click="exportToPDF">Export to PDF</button> -->
-     
     </div>
     <button class="export-button" @click="exportAsJPG">Export as JPG</button>
   </div>
@@ -13,10 +11,8 @@
 <script>
 import Palette from './Palette.vue';
 import Paper from './Paper.vue';
-import html2pdf from 'html2pdf.js';
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue'; 
 import html2canvas from 'html2canvas';
-
 
 export default {
   components: {
@@ -31,43 +27,30 @@ export default {
       droppedItems.value.push(item);
     };
 
-    const exportToPDF = async () => {
-      const paperElement = document.querySelector('.paper');
-
-      const pdfOptions = {
-        margin: 10,
-        filename: 'exported-paper.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      };
-
-      try {
-        const pdf = await html2pdf().from(paperElement).set(pdfOptions).outputPdf();
-
-        const blob = new Blob([pdf], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank');
-      } catch (error) {
-        console.error('PDF export error:', error);
-      }
-    };
-
     const exportAsJPG = async () => {
-      const paperComponent = paperRef.value;
+  // Ensures that Vue has updated the DOM before capturing the image
+  await nextTick();
 
-      if (paperComponent) {
-        const canvas = await html2canvas(paperComponent.$el);
-        const dataURL = canvas.toDataURL('image/jpeg');
+  // Call the method from Paper.vue to ensure all images have loaded
+  await paperRef.value.ensureImagesLoaded();
 
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = 'paper-export.jpg';
-        link.click();
-      }
-    };
+  // Use html2canvas to capture the content
+  const paperElement = paperRef.value.$el;
+  html2canvas(paperElement, { allowTaint: true, useCORS: true }).then((canvas) => {
+    const dataURL = canvas.toDataURL('image/jpeg');
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'paper-export.jpg';
+    document.body.appendChild(link); // Append the link to the body
+    link.click();
+    document.body.removeChild(link); // Clean up and remove the link
+  }).catch((error) => {
+    console.error('Error exporting as JPG:', error);
+  });
+};
 
-    return { droppedItems, addItemToPaper, exportToPDF, exportAsJPG, paperRef };
+
+    return { droppedItems, addItemToPaper, exportAsJPG, paperRef };
   },
 };
 </script>

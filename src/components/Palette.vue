@@ -1,10 +1,17 @@
 <template>
   <div class="palette">
     <div v-for="item in items" :key="item.id" draggable="true" @dragstart="startDrag(item, $event)" class="item">
-      {{ item.name }}
+      <template v-if="item.imageUrl">
+        <img :src="item.imageUrl" alt="Image" class="image-item" />
+      </template>
+      <template v-else>
+        {{ item.name }}
+      </template>
     </div>
   </div>
 </template>
+
+
 
 <script>
 import { ref, onMounted } from 'vue';
@@ -52,5 +59,10 @@ export default {
   background-color: transparent; /* Transparent background */
   color: #333; /* Text color */
 }
-</style>
 
+/* Style for image items */
+.item img {
+  max-width: 100%;
+  max-height: 100px; /* Adjust height as needed */
+}
+</style>

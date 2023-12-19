@@ -8,7 +8,12 @@
       draggable="true"
       @dragstart="startDrag(item, $event)"
     >
-      {{ item.name }}
+      <template v-if="item.imageUrl">
+        <img :src="item.imageUrl" alt="Dropped Image" class="dropped-image" crossorigin="anonymous"/>
+      </template>
+      <template v-else>
+        {{ item.name }}
+      </template>
       <div class="popup" :class="{ 'popup-visible': item.showPopup }">
         <button @click="deleteItem(item)">Delete</button>
         <div class="position-adjust">
@@ -34,6 +39,7 @@
   </div>
 </template>
 
+
 <script>
 import { ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
@@ -43,8 +49,22 @@ export default {
     initialX: Number,
     initialY: Number,
   },
+  
   setup(props) {
     const droppedItems = ref([]);
+
+    const ensureImagesLoaded = () => {
+      const images = document.querySelectorAll('.paper img');
+      return Promise.all(Array.from(images).map(img => {
+        if (img.complete && img.naturalHeight !== 0) {
+          return Promise.resolve();
+        }
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve; // Resolve even on error
+        });
+      }));
+    };
 
     const onDrop = (event) => {
       event.preventDefault();
@@ -81,20 +101,32 @@ export default {
       item.showPopup = false;
     };
 
-    const exportAsJPG = () => {
-      const paperElement = document.querySelector('.paper');
+    const exportAsJPG = async () => {
+    const paperElement = document.querySelector('.paper');
+    const images = paperElement.querySelectorAll('img');
 
-      html2canvas(paperElement).then((canvas) => {
-        // Convert the canvas to a data URL with JPG format
-        const dataURL = canvas.toDataURL('image/jpeg');
-
-        // Create a link element to trigger the download
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = 'paper-export.jpg';
-        link.click();
+    // Wait for all images to load
+    await Promise.all(Array.from(images).map(img => {
+      if (img.complete && img.naturalHeight !== 0) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; // Resolve even if there's an error
       });
+    }));
+
+  // Proceed with export after all images have loaded
+    html2canvas(paperElement).then((canvas) => {
+      const dataURL = canvas.toDataURL('image/jpeg');
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = 'paper-export.jpg';
+      link.click();
+    });
     };
+  
+
 
     onMounted(() => {
       document.addEventListener('click', (event) => {
@@ -105,6 +137,7 @@ export default {
         }
       });
     });
+    
 
     if (props.initialX !== undefined && props.initialY !== undefined) {
       const item = {
@@ -119,8 +152,9 @@ export default {
       droppedItems.value.push(item);
     }
 
-    return { droppedItems, onDrop, startDrag, deleteItem, adjustPosition, exportAsJPG };
+    return { droppedItems, onDrop, startDrag, deleteItem, adjustPosition, exportAsJPG ,ensureImagesLoaded};
   },
+  
 };
 </script>
 
@@ -163,5 +197,14 @@ export default {
 
 .dropped-item:hover .popup {
   display: block;
+}
+
+/* Style for dropped images */
+.dropped-image {
+  width: 200px; /* Set the width to 200px */
+  height: 200px; /* Set the height to 200px */
+  max-width: 100%; /* Ensure it doesn't exceed the container's width */
+  max-height: 100%; /* Ensure it doesn't exceed the container's height */
+  display: block; /* Make the image a block element */
 }
 </style>
