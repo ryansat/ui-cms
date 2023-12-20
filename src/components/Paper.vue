@@ -48,9 +48,10 @@ export default {
   props: {
     initialX: Number,
     initialY: Number,
-    droppedItems: Array, // Prop to accept dropped items from parent
+    droppedItems: Array,
   },
-  setup(props) {
+  emits: ['update-items'],
+  setup(props, { emit }) {
     const localDroppedItems = ref([...props.droppedItems]);
 
     watch(() => props.droppedItems, (newItems) => {
@@ -74,23 +75,22 @@ export default {
     };
 
     const deleteItem = (item) => {
-      const index = droppedItems.value.findIndex((existing) => existing.id === item.id);
+      const index = localDroppedItems.value.findIndex((existing) => existing.id === item.id);
       if (index !== -1) {
-        droppedItems.value.splice(index, 1);
+        localDroppedItems.value.splice(index, 1);
+        emit('update-items', localDroppedItems.value);
       }
-      this.$emit('update-items', droppedItems.value);
     };
-
 
     const adjustPosition = (item) => {
       item.x += item.adjustX;
       item.y += item.adjustY;
       item.showPopup = false;
+      emit('update-items', localDroppedItems.value);
     };
 
+    // Existing onDrop logic
 
-
-    // Inside Paper.vue
     const onDrop = (event) => {
       event.preventDefault();
       const itemData = event.dataTransfer.getData('application/json');
@@ -130,7 +130,7 @@ export default {
     });
 
     const serializeCurrentState = () => {
-      return JSON.stringify(droppedItems.value, null, 2);
+      return JSON.stringify(localDroppedItems.value, null, 2);
     };
 
     const ensureImagesLoaded = () => {
@@ -158,8 +158,6 @@ export default {
       }));
     };
 
-
-    // Return the necessary reactive data and methods
     return {
       localDroppedItems,
       onDrop,

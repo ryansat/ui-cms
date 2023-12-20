@@ -15,6 +15,7 @@ import Palette from './Palette.vue';
 import Paper from './Paper.vue';
 import { ref, nextTick } from 'vue'; 
 import html2canvas from 'html2canvas';
+import { v4 as uuidv4 } from 'uuid';
 
 export default {
   components: {
@@ -28,9 +29,9 @@ export default {
     const updateDroppedItems = (updatedItems) => {
       droppedItems.value = updatedItems;
     };
-// Inside Workspace.vue
+
     const addItemToPaper = (item) => {
-      droppedItems.value.push({ ...item, id: uuidv4(), x: 0, y: 0 }); // Add default x, y, and unique id
+      droppedItems.value.push({ ...item, id: uuidv4(), x: 0, y: 0 });
     };
 
     const importLayoutFromJson = async (event) => {
@@ -59,9 +60,8 @@ export default {
 
     const exportLayoutToJson = async () => {
       await nextTick();
+      let layoutData = paperRef.value ? paperRef.value.serializeCurrentState() : JSON.stringify(droppedItems.value, null, 2);
       await paperRef.value.ensureImagesLoaded();
-
-      let layoutData;
       if (droppedItems.value.length === 0) {
         // Get the layout data directly from Paper.vue
         layoutData = paperRef.value.serializeCurrentState();
@@ -78,30 +78,29 @@ export default {
       URL.revokeObjectURL(link.href);
     };
 
-
     const exportAsJPG = async () => {
-  // Ensures that Vue has updated the DOM before capturing the image
-    await nextTick();
+      // Ensures that Vue has updated the DOM before capturing the image
+        await nextTick();
+    
+      // Call the method from Paper.vue to ensure all images have loaded
+        await paperRef.value.ensureImagesLoaded();
+    
+        // Use html2canvas to capture the content
+        const paperElement = paperRef.value.$el;
+        html2canvas(paperElement, { allowTaint: true, useCORS: true }).then((canvas) => {
+          const dataURL = canvas.toDataURL('image/jpeg');
+          const link = document.createElement('a');
+          link.href = dataURL;
+          link.download = 'paper-export.jpg';
+          document.body.appendChild(link); // Append the link to the body
+          link.click();
+          document.body.removeChild(link); // Clean up and remove the link
+        }).catch((error) => {
+          console.error('Error exporting as JPG:', error);
+        });
+      };
 
-  // Call the method from Paper.vue to ensure all images have loaded
-    await paperRef.value.ensureImagesLoaded();
-
-    // Use html2canvas to capture the content
-    const paperElement = paperRef.value.$el;
-    html2canvas(paperElement, { allowTaint: true, useCORS: true }).then((canvas) => {
-      const dataURL = canvas.toDataURL('image/jpeg');
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = 'paper-export.jpg';
-      document.body.appendChild(link); // Append the link to the body
-      link.click();
-      document.body.removeChild(link); // Clean up and remove the link
-    }).catch((error) => {
-      console.error('Error exporting as JPG:', error);
-    });
-  };
-
-  return {
+    return {
       droppedItems,
       addItemToPaper,
       exportAsJPG,
