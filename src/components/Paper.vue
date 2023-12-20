@@ -1,7 +1,7 @@
 <template>
   <div class="paper" @dragover.prevent @drop="onDrop">
     <div
-      v-for="item in droppedItems"
+      v-for="item in localDroppedItems"
       :key="item.id"
       class="dropped-item"
       :style="{ left: item.x + 'px', top: item.y + 'px' }"
@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import html2canvas from 'html2canvas';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -48,9 +48,86 @@ export default {
   props: {
     initialX: Number,
     initialY: Number,
+    droppedItems: Array, // Prop to accept dropped items from parent
   },
   setup(props) {
-    const droppedItems = ref([]);
+    const localDroppedItems = ref([...props.droppedItems]);
+
+    watch(() => props.droppedItems, (newItems) => {
+      localDroppedItems.value = [...newItems];
+    });
+
+    const exportAsJPG = async () => {
+      await ensureImagesLoaded();
+      const paperElement = document.querySelector('.paper');
+      html2canvas(paperElement).then((canvas) => {
+        const dataURL = canvas.toDataURL('image/jpeg');
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'paper-export.jpg';
+        link.click();
+      });
+    };
+
+    const startDrag = (item, event) => {
+      event.dataTransfer.setData('application/json', JSON.stringify(item));
+    };
+
+    const deleteItem = (item) => {
+      const index = droppedItems.value.findIndex((existing) => existing.id === item.id);
+      if (index !== -1) {
+        droppedItems.value.splice(index, 1);
+      }
+      this.$emit('update-items', droppedItems.value);
+    };
+
+
+    const adjustPosition = (item) => {
+      item.x += item.adjustX;
+      item.y += item.adjustY;
+      item.showPopup = false;
+    };
+
+
+
+    // Inside Paper.vue
+    const onDrop = (event) => {
+      event.preventDefault();
+      const itemData = event.dataTransfer.getData('application/json');
+      const item = JSON.parse(itemData);
+
+      // Check if item already exists
+      const existingItem = localDroppedItems.value.find(i => i.id === item.id);
+      if (!existingItem) {
+        item.x = event.clientX - event.currentTarget.getBoundingClientRect().left;
+        item.y = event.clientY - event.currentTarget.getBoundingClientRect().top;
+        localDroppedItems.value.push(item);
+      }
+    };
+
+    onMounted(() => {
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('.paper') && !event.target.closest('.popup')) {
+          localDroppedItems.value.forEach((item) => {
+            item.showPopup = false;
+          });
+        }
+      });
+
+      if (props.initialX !== undefined && props.initialY !== undefined) {
+        const newItem = {
+          id: uuidv4(),
+          name: 'New Item',
+          x: props.initialX,
+          y: props.initialY,
+          adjustX: 0,
+          adjustY: 0,
+          showPopup: false
+        };
+        localDroppedItems.value.push(newItem);
+        this.$emit('update-items', localDroppedItems.value);
+      }
+    });
 
     const serializeCurrentState = () => {
       return JSON.stringify(droppedItems.value, null, 2);
@@ -69,86 +146,30 @@ export default {
       }));
     };
 
-    const onDrop = (event) => {
-      event.preventDefault();
-      const itemData = event.dataTransfer.getData('application/json');
-      const item = JSON.parse(itemData);
-      const existingItem = droppedItems.value.find((existing) => existing.id === item.id);
-
-      if (!existingItem) {
-        item.id = item.id || uuidv4();
-        item.x = event.clientX - event.currentTarget.getBoundingClientRect().left;
-        item.y = event.clientY - event.currentTarget.getBoundingClientRect().top;
-        item.adjustX = item.adjustX || 0;
-        item.adjustY = item.adjustY || 0;
-        item.showPopup = item.showPopup || false;
-        droppedItems.value.push(item);
-      }
+    const loadLayoutFromJson = (layoutData) => {
+      localDroppedItems.value = layoutData.map(item => ({
+        ...item,
+        id: item.id || uuidv4(), // Ensure each item has a unique ID
+        x: item.x || 0,
+        y: item.y || 0,
+        adjustX: item.adjustX || 0,
+        adjustY: item.adjustY || 0,
+        showPopup: item.showPopup || false
+      }));
     };
 
-    const startDrag = (item, event) => {
-      event.dataTransfer.setData('application/json', JSON.stringify(item));
-    };
 
-    const deleteItem = (item) => {
-      const index = droppedItems.value.findIndex((existing) => existing.id === item.id);
-      if (index !== -1) {
-        droppedItems.value.splice(index, 1);
-      }
-      this.$emit('update-items', droppedItems.value);
-    };
-
-    const adjustPosition = (item) => {
-      item.x += item.adjustX;
-      item.y += item.adjustY;
-      item.showPopup = false;
-    };
-
-    const exportAsJPG = async () => {
-      await ensureImagesLoaded();
-      const paperElement = document.querySelector('.paper');
-      html2canvas(paperElement).then((canvas) => {
-        const dataURL = canvas.toDataURL('image/jpeg');
-        const link = document.createElement('a');
-        link.href = dataURL;
-        link.download = 'paper-export.jpg';
-        link.click();
-      });
-    };
-
-    onMounted(() => {
-      document.addEventListener('click', (event) => {
-        if (!event.target.closest('.paper') && !event.target.closest('.popup')) {
-          droppedItems.value.forEach((item) => {
-            item.showPopup = false;
-          });
-        }
-      });
-
-      if (props.initialX !== undefined && props.initialY !== undefined) {
-        const newItem = {
-          id: uuidv4(),
-          name: 'New Item',
-          x: props.initialX,
-          y: props.initialY,
-          adjustX: 0,
-          adjustY: 0,
-          showPopup: false
-        };
-        droppedItems.value.push(newItem);
-        this.$emit('update-items', droppedItems.value);
-      }
-    });
-
+    // Return the necessary reactive data and methods
     return {
-      droppedItems,
+      localDroppedItems,
       onDrop,
       startDrag,
       deleteItem,
       adjustPosition,
       exportAsJPG,
       ensureImagesLoaded,
-      serializeCurrentState
+      serializeCurrentState,
+      loadLayoutFromJson
     };
   },
 };

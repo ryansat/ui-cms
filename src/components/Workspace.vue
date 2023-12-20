@@ -6,6 +6,7 @@
     </div>
     <button class="export-button" @click="exportAsJPG">Export as JPG</button>
     <button class="export-json-button" @click="exportLayoutToJson">Export Layout to JSON</button>
+    <input type="file" class="import-json-button" @change="importLayoutFromJson" accept=".json">
   </div>
 </template>
 
@@ -27,8 +28,33 @@ export default {
     const updateDroppedItems = (updatedItems) => {
       droppedItems.value = updatedItems;
     };
+// Inside Workspace.vue
     const addItemToPaper = (item) => {
-      droppedItems.value.push(item);
+      droppedItems.value.push({ ...item, id: uuidv4(), x: 0, y: 0 }); // Add default x, y, and unique id
+    };
+
+    const importLayoutFromJson = async (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (Array.isArray(importedData)) {
+            droppedItems.value = importedData;
+          } else {
+            console.error('Invalid JSON format');
+            alert('Invalid JSON format');
+          }
+        } catch (err) {
+          console.error('Error reading JSON:', err);
+          alert('Error reading JSON file');
+        }
+      };
+      reader.readAsText(file);
     };
 
     const exportLayoutToJson = async () => {
@@ -75,8 +101,15 @@ export default {
     });
   };
 
-
-    return { droppedItems, addItemToPaper, exportAsJPG, paperRef, exportLayoutToJson,updateDroppedItems };
+  return {
+      droppedItems,
+      addItemToPaper,
+      exportAsJPG,
+      paperRef,
+      exportLayoutToJson,
+      updateDroppedItems,
+      importLayoutFromJson
+    };
   },
 };
 </script>
@@ -91,7 +124,7 @@ export default {
 .export-button {
   position: absolute;
   top: -30px;
-  right: -200px;
+  right: -300px;
   z-index: 2;
   background-color: #007bff;
   color: #fff;
@@ -103,7 +136,19 @@ export default {
 .export-json-button {
   position: absolute;
   top: 20px;
-  right: -200px;
+  right: -300px;
+  z-index: 2;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.import-json-button {
+  position: absolute;
+  top: 60px;
+  right: -300px;
   z-index: 2;
   background-color: #007bff;
   color: #fff;
