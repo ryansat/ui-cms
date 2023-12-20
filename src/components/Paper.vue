@@ -39,19 +39,22 @@
   </div>
 </template>
 
-
 <script>
 import { ref, onMounted } from 'vue';
 import html2canvas from 'html2canvas';
+import { v4 as uuidv4 } from 'uuid';
 
 export default {
   props: {
     initialX: Number,
     initialY: Number,
   },
-  
   setup(props) {
     const droppedItems = ref([]);
+
+    const serializeCurrentState = () => {
+      return JSON.stringify(droppedItems.value, null, 2);
+    };
 
     const ensureImagesLoaded = () => {
       const images = document.querySelectorAll('.paper img');
@@ -61,7 +64,7 @@ export default {
         }
         return new Promise((resolve) => {
           img.onload = resolve;
-          img.onerror = resolve; // Resolve even on error
+          img.onerror = resolve;
         });
       }));
     };
@@ -70,16 +73,15 @@ export default {
       event.preventDefault();
       const itemData = event.dataTransfer.getData('application/json');
       const item = JSON.parse(itemData);
-
       const existingItem = droppedItems.value.find((existing) => existing.id === item.id);
 
       if (!existingItem) {
-        const rect = event.target.getBoundingClientRect();
-        item.x = event.clientX - rect.left + window.scrollX;
-        item.y = event.clientY - rect.top + window.scrollY;
-        item.adjustX = 0;
-        item.adjustY = 0;
-
+        item.id = item.id || uuidv4();
+        item.x = event.clientX - event.currentTarget.getBoundingClientRect().left;
+        item.y = event.clientY - event.currentTarget.getBoundingClientRect().top;
+        item.adjustX = item.adjustX || 0;
+        item.adjustY = item.adjustY || 0;
+        item.showPopup = item.showPopup || false;
         droppedItems.value.push(item);
       }
     };
@@ -93,6 +95,7 @@ export default {
       if (index !== -1) {
         droppedItems.value.splice(index, 1);
       }
+      this.$emit('update-items', droppedItems.value);
     };
 
     const adjustPosition = (item) => {
@@ -102,31 +105,16 @@ export default {
     };
 
     const exportAsJPG = async () => {
-    const paperElement = document.querySelector('.paper');
-    const images = paperElement.querySelectorAll('img');
-
-    // Wait for all images to load
-    await Promise.all(Array.from(images).map(img => {
-      if (img.complete && img.naturalHeight !== 0) {
-        return Promise.resolve();
-      }
-      return new Promise((resolve) => {
-        img.onload = resolve;
-        img.onerror = resolve; // Resolve even if there's an error
+      await ensureImagesLoaded();
+      const paperElement = document.querySelector('.paper');
+      html2canvas(paperElement).then((canvas) => {
+        const dataURL = canvas.toDataURL('image/jpeg');
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'paper-export.jpg';
+        link.click();
       });
-    }));
-
-  // Proceed with export after all images have loaded
-    html2canvas(paperElement).then((canvas) => {
-      const dataURL = canvas.toDataURL('image/jpeg');
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = 'paper-export.jpg';
-      link.click();
-    });
     };
-  
-
 
     onMounted(() => {
       document.addEventListener('click', (event) => {
@@ -136,25 +124,33 @@ export default {
           });
         }
       });
+
+      if (props.initialX !== undefined && props.initialY !== undefined) {
+        const newItem = {
+          id: uuidv4(),
+          name: 'New Item',
+          x: props.initialX,
+          y: props.initialY,
+          adjustX: 0,
+          adjustY: 0,
+          showPopup: false
+        };
+        droppedItems.value.push(newItem);
+        this.$emit('update-items', droppedItems.value);
+      }
     });
-    
 
-    if (props.initialX !== undefined && props.initialY !== undefined) {
-      const item = {
-        id: 'unique-id',
-        name: 'Item',
-        x: props.initialX,
-        y: props.initialY,
-        adjustX: 0,
-        adjustY: 0,
-        showPopup: false,
-      };
-      droppedItems.value.push(item);
-    }
-
-    return { droppedItems, onDrop, startDrag, deleteItem, adjustPosition, exportAsJPG ,ensureImagesLoaded};
+    return {
+      droppedItems,
+      onDrop,
+      startDrag,
+      deleteItem,
+      adjustPosition,
+      exportAsJPG,
+      ensureImagesLoaded,
+      serializeCurrentState
+    };
   },
-  
 };
 </script>
 
