@@ -7,6 +7,7 @@
       :style="{ left: item.x + 'px', top: item.y + 'px' }"
       draggable="true"
       @dragstart="startDrag(item, $event)"
+      @click="showPopup(item)"
     >
       <template v-if="item.imageUrl">
         <img
@@ -22,21 +23,21 @@
       <div class="popup" :class="{ 'popup-visible': item.showPopup }">
         <button @click="deleteItem(item)">Delete</button>
         <div class="position-adjust">
-          <label for="adjustX">Adjust X:</label>
+          <label for="adjustX">X:</label>
           <input
             id="adjustX"
-            v-model="item.adjustX"
+            v-model.number="item.x"
             type="number"
             placeholder="X (px)"
           />
-          <label for="adjustY">Adjust Y:</label>
+          <label for="adjustY">Y:</label>
           <input
             id="adjustY"
-            v-model="item.adjustY"
+            v-model.number="item.y"
             type="number"
             placeholder="Y (px)"
           />
-          <button @click="adjustPosition(item)">Confirm</button>
+          <button @click="hidePopup(item)">Close</button>
         </div>
       </div>
     </div>
@@ -99,8 +100,16 @@ export default {
       emit("update-items", localDroppedItems.value);
     };
 
-    // Existing onDrop logic
+    const showPopup = (item) => {
+      item.showPopup = true;
+    };
 
+    const hidePopup = (item) => {
+      item.showPopup = false;
+      emit("update-items", localDroppedItems.value); // Emit update after closing popup
+    };
+
+    //onDrop logic
     const onDrop = (event) => {
       event.preventDefault();
       const itemData = event.dataTransfer.getData("application/json");
@@ -195,7 +204,8 @@ export default {
       onDrop,
       startDrag,
       deleteItem,
-      adjustPosition,
+      showPopup,
+      hidePopup,
       exportAsJPG,
       ensureImagesLoaded,
       serializeCurrentState,
