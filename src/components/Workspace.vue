@@ -2,20 +2,31 @@
   <div class="app-container">
     <Palette class="palette-section" @addItemToPaper="addItemToPaper" />
     <div class="paper-section">
-      <Paper :droppedItems="droppedItems" ref="paperRef" @update-items="updateDroppedItems" />
+      <Paper
+        :droppedItems="droppedItems"
+        ref="paperRef"
+        @update-items="updateDroppedItems"
+      />
     </div>
     <button class="export-button" @click="exportAsJPG">Export as JPG</button>
-    <button class="export-json-button" @click="exportLayoutToJson">Export Layout to JSON</button>
-    <input type="file" class="import-json-button" @change="importLayoutFromJson" accept=".json">
+    <button class="export-json-button" @click="exportLayoutToJson">
+      Export Layout to JSON
+    </button>
+    <input
+      type="file"
+      class="import-json-button"
+      @change="importLayoutFromJson"
+      accept=".json"
+    />
   </div>
 </template>
 
 <script>
-import Palette from './Palette.vue';
-import Paper from './Paper.vue';
-import { ref, nextTick } from 'vue'; 
-import html2canvas from 'html2canvas';
-import { v4 as uuidv4 } from 'uuid';
+import Palette from "./Palette.vue";
+import Paper from "./Paper.vue";
+import { ref, nextTick } from "vue";
+import html2canvas from "html2canvas";
+import { v4 as uuidv4 } from "uuid";
 
 export default {
   components: {
@@ -31,7 +42,7 @@ export default {
     };
 
     const addItemToPaper = (item) => {
-      droppedItems.value.push({ ...item, id: uuidv4(), x: 0, y: 0 });
+      droppedItems.value.push({ ...item, id: uuidv4(), x: 100, y: 100 });
     };
 
     const importLayoutFromJson = async (event) => {
@@ -47,12 +58,12 @@ export default {
           if (Array.isArray(importedData)) {
             droppedItems.value = importedData;
           } else {
-            console.error('Invalid JSON format');
-            alert('Invalid JSON format');
+            console.error("Invalid JSON format");
+            alert("Invalid JSON format");
           }
         } catch (err) {
-          console.error('Error reading JSON:', err);
-          alert('Error reading JSON file');
+          console.error("Error reading JSON:", err);
+          alert("Error reading JSON file");
         }
       };
       reader.readAsText(file);
@@ -60,7 +71,9 @@ export default {
 
     const exportLayoutToJson = async () => {
       await nextTick();
-      let layoutData = paperRef.value ? paperRef.value.serializeCurrentState() : JSON.stringify(droppedItems.value, null, 2);
+      let layoutData = paperRef.value
+        ? paperRef.value.serializeCurrentState()
+        : JSON.stringify(droppedItems.value, null, 2);
       await paperRef.value.ensureImagesLoaded();
       if (droppedItems.value.length === 0) {
         // Get the layout data directly from Paper.vue
@@ -70,35 +83,37 @@ export default {
         layoutData = JSON.stringify(droppedItems.value, null, 2);
       }
 
-      const blob = new Blob([layoutData], { type: 'application/json' });
-      const link = document.createElement('a');
+      const blob = new Blob([layoutData], { type: "application/json" });
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = 'layout.json';
+      link.download = "layout.json";
       link.click();
       URL.revokeObjectURL(link.href);
     };
 
     const exportAsJPG = async () => {
       // Ensures that Vue has updated the DOM before capturing the image
-        await nextTick();
-    
+      await nextTick();
+
       // Call the method from Paper.vue to ensure all images have loaded
-        await paperRef.value.ensureImagesLoaded();
-    
-        // Use html2canvas to capture the content
-        const paperElement = paperRef.value.$el;
-        html2canvas(paperElement, { allowTaint: true, useCORS: true }).then((canvas) => {
-          const dataURL = canvas.toDataURL('image/jpeg');
-          const link = document.createElement('a');
+      await paperRef.value.ensureImagesLoaded();
+
+      // Use html2canvas to capture the content
+      const paperElement = paperRef.value.$el;
+      html2canvas(paperElement, { allowTaint: true, useCORS: true })
+        .then((canvas) => {
+          const dataURL = canvas.toDataURL("image/jpeg");
+          const link = document.createElement("a");
           link.href = dataURL;
-          link.download = 'paper-export.jpg';
+          link.download = "paper-export.jpg";
           document.body.appendChild(link); // Append the link to the body
           link.click();
           document.body.removeChild(link); // Clean up and remove the link
-        }).catch((error) => {
-          console.error('Error exporting as JPG:', error);
+        })
+        .catch((error) => {
+          console.error("Error exporting as JPG:", error);
         });
-      };
+    };
 
     return {
       droppedItems,
@@ -107,7 +122,7 @@ export default {
       paperRef,
       exportLayoutToJson,
       updateDroppedItems,
-      importLayoutFromJson
+      importLayoutFromJson,
     };
   },
 };

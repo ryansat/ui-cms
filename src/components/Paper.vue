@@ -1,5 +1,5 @@
 <template>
-  <div class="paper" @dragover.prevent @drop="onDrop">
+  <div class="paper" @dragover.prevent="allowDrop" @drop="onDrop">
     <div
       v-for="item in localDroppedItems"
       :key="item.id"
@@ -9,7 +9,12 @@
       @dragstart="startDrag(item, $event)"
     >
       <template v-if="item.imageUrl">
-        <img :src="item.imageUrl" alt="Dropped Image" class="dropped-image" crossorigin="anonymous"/>
+        <img
+          :src="item.imageUrl"
+          alt="Dropped Image"
+          class="dropped-image"
+          crossorigin="anonymous"
+        />
       </template>
       <template v-else>
         {{ item.name }}
@@ -40,9 +45,9 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
-import html2canvas from 'html2canvas';
-import { v4 as uuidv4 } from 'uuid';
+import { ref, onMounted, watch } from "vue";
+import html2canvas from "html2canvas";
+import { v4 as uuidv4 } from "uuid";
 
 export default {
   props: {
@@ -50,35 +55,40 @@ export default {
     initialY: Number,
     droppedItems: Array,
   },
-  emits: ['update-items'],
+  emits: ["update-items"],
   setup(props, { emit }) {
     const localDroppedItems = ref([...props.droppedItems]);
 
-    watch(() => props.droppedItems, (newItems) => {
-      localDroppedItems.value = [...newItems];
-    });
+    watch(
+      () => props.droppedItems,
+      (newItems) => {
+        localDroppedItems.value = [...newItems];
+      }
+    );
 
     const exportAsJPG = async () => {
       await ensureImagesLoaded();
-      const paperElement = document.querySelector('.paper');
+      const paperElement = document.querySelector(".paper");
       html2canvas(paperElement).then((canvas) => {
-        const dataURL = canvas.toDataURL('image/jpeg');
-        const link = document.createElement('a');
+        const dataURL = canvas.toDataURL("image/jpeg");
+        const link = document.createElement("a");
         link.href = dataURL;
-        link.download = 'paper-export.jpg';
+        link.download = "paper-export.jpg";
         link.click();
       });
     };
 
     const startDrag = (item, event) => {
-      event.dataTransfer.setData('application/json', JSON.stringify(item));
+      event.dataTransfer.setData("application/json", JSON.stringify(item));
     };
 
     const deleteItem = (item) => {
-      const index = localDroppedItems.value.findIndex((existing) => existing.id === item.id);
+      const index = localDroppedItems.value.findIndex(
+        (existing) => existing.id === item.id
+      );
       if (index !== -1) {
         localDroppedItems.value.splice(index, 1);
-        emit('update-items', localDroppedItems.value);
+        emit("update-items", localDroppedItems.value);
       }
     };
 
@@ -86,28 +96,48 @@ export default {
       item.x += item.adjustX;
       item.y += item.adjustY;
       item.showPopup = false;
-      emit('update-items', localDroppedItems.value);
+      emit("update-items", localDroppedItems.value);
     };
 
     // Existing onDrop logic
 
     const onDrop = (event) => {
       event.preventDefault();
-      const itemData = event.dataTransfer.getData('application/json');
-      const item = JSON.parse(itemData);
+      const itemData = event.dataTransfer.getData("application/json");
+      if (itemData) {
+        const item = JSON.parse(itemData);
+        const existingItemIndex = localDroppedItems.value.findIndex(
+          (i) => i.id === item.id
+        );
 
-      // Check if item already exists
-      const existingItem = localDroppedItems.value.find(i => i.id === item.id);
-      if (!existingItem) {
-        item.x = event.clientX - event.currentTarget.getBoundingClientRect().left;
-        item.y = event.clientY - event.currentTarget.getBoundingClientRect().top;
-        localDroppedItems.value.push(item);
+        if (existingItemIndex >= 0) {
+          // Update position of the existing item
+          localDroppedItems.value[existingItemIndex].x =
+            event.clientX - event.currentTarget.getBoundingClientRect().left;
+          localDroppedItems.value[existingItemIndex].y =
+            event.clientY - event.currentTarget.getBoundingClientRect().top;
+        } else {
+          // Add new item
+          item.x =
+            event.clientX - event.currentTarget.getBoundingClientRect().left;
+          item.y =
+            event.clientY - event.currentTarget.getBoundingClientRect().top;
+          localDroppedItems.value.push(item);
+        }
+        emit("update-items", localDroppedItems.value);
       }
     };
 
+    const allowDrop = (event) => {
+      event.preventDefault();
+    };
+
     onMounted(() => {
-      document.addEventListener('click', (event) => {
-        if (!event.target.closest('.paper') && !event.target.closest('.popup')) {
+      document.addEventListener("click", (event) => {
+        if (
+          !event.target.closest(".paper") &&
+          !event.target.closest(".popup")
+        ) {
           localDroppedItems.value.forEach((item) => {
             item.showPopup = false;
           });
@@ -117,15 +147,15 @@ export default {
       if (props.initialX !== undefined && props.initialY !== undefined) {
         const newItem = {
           id: uuidv4(),
-          name: 'New Item',
+          name: "New Item",
           x: props.initialX,
           y: props.initialY,
           adjustX: 0,
           adjustY: 0,
-          showPopup: false
+          showPopup: false,
         };
         localDroppedItems.value.push(newItem);
-        this.$emit('update-items', localDroppedItems.value);
+        this.$emit("update-items", localDroppedItems.value);
       }
     });
 
@@ -134,27 +164,29 @@ export default {
     };
 
     const ensureImagesLoaded = () => {
-      const images = document.querySelectorAll('.paper img');
-      return Promise.all(Array.from(images).map(img => {
-        if (img.complete && img.naturalHeight !== 0) {
-          return Promise.resolve();
-        }
-        return new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        });
-      }));
+      const images = document.querySelectorAll(".paper img");
+      return Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete && img.naturalHeight !== 0) {
+            return Promise.resolve();
+          }
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
     };
 
     const loadLayoutFromJson = (layoutData) => {
-      localDroppedItems.value = layoutData.map(item => ({
+      localDroppedItems.value = layoutData.map((item) => ({
         ...item,
         id: item.id || uuidv4(), // Ensure each item has a unique ID
         x: item.x || 0,
         y: item.y || 0,
         adjustX: item.adjustX || 0,
         adjustY: item.adjustY || 0,
-        showPopup: item.showPopup || false
+        showPopup: item.showPopup || false,
       }));
     };
 
@@ -167,7 +199,8 @@ export default {
       exportAsJPG,
       ensureImagesLoaded,
       serializeCurrentState,
-      loadLayoutFromJson
+      loadLayoutFromJson,
+      allowDrop,
     };
   },
 };

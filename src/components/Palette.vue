@@ -1,54 +1,58 @@
 <template>
   <div class="palette">
-    <div v-for="item in items" :key="item.id" draggable="true" @dragstart="startDrag(item, $event)" class="item">
-      <template v-if="item.imageUrl">
-        <img :src="item.imageUrl" alt="Image" class="image-item" />
-      </template>
-      <template v-else>
-        {{ item.name }}
-      </template>
+    <div
+      v-for="item in items"
+      :key="item.id"
+      draggable="true"
+      @dragstart="startDrag(item, $event)"
+      class="item"
+    >
+      <img
+        v-if="item.imageUrl"
+        :src="item.imageUrl"
+        alt="Image"
+        class="palette-image"
+      />
+      <span v-else>{{ item.name }}</span>
     </div>
   </div>
 </template>
 
-
-
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted } from "vue";
 
 export default {
   setup() {
     const items = ref([]);
 
-    onMounted(async () => {
+    const fetchItems = async () => {
       try {
-        const response = await fetch('/mockData.json');
-        if (!response.ok) throw new Error('Failed to fetch');
-        items.value = await response.json();
+        const response = await fetch("/mockData.json");
+        if (!response.ok) throw new Error("Network response was not ok.");
+        const data = await response.json();
+        items.value = data;
       } catch (error) {
-        console.error('Error fetching mock data:', error);
+        console.error("Fetch error:", error);
+        // Fallback to default items or handle the error as needed
       }
-    });
+    };
+
+    onMounted(fetchItems);
 
     const startDrag = (item, event) => {
-      event.dataTransfer.setData('application/json', JSON.stringify(item));
+      event.dataTransfer.setData("application/json", JSON.stringify(item));
     };
 
     return { items, startDrag };
-  }
+  },
 };
 </script>
 
 <style scoped>
 .palette {
-  width: 200px; /* Adjust width as needed */
+  width: 200px;
   height: 100vh;
-  position: fixed;
-  left: 20%;
-  transform: translateX(-100%);
-  top: 0;
   background-color: #f0f0f0;
-  /* Additional styling */
 }
 
 .item {
@@ -56,13 +60,15 @@ export default {
   margin: 10px;
   padding: 10px;
   border: 1px solid #ddd;
-  background-color: transparent; /* Transparent background */
-  color: #333; /* Text color */
+  background-color: white;
+  color: #333;
+  display: flex;
+  align-items: center;
 }
 
-/* Style for image items */
-.item img {
+.palette-image {
   max-width: 100%;
-  max-height: 100px; /* Adjust height as needed */
+  max-height: 50px; /* Adjust as needed */
+  margin-right: 10px;
 }
 </style>
