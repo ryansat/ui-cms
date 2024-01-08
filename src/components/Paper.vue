@@ -41,7 +41,7 @@
         </div>
       </div>
     </div>
-    <button @click="exportAsJPG">Export as JPG</button>
+    <!-- <button @click="exportAsJPG">Export as JPG</button> -->
   </div>
 </template>
 

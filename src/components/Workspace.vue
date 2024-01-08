@@ -2,24 +2,23 @@
   <div class="app-container">
     <Palette class="palette-section" @addItemToPaper="addItemToPaper" />
     <div class="paper-section">
-      <Paper
-        :droppedItems="droppedItems"
-        ref="paperRef"
-        @update-items="updateDroppedItems"
+      <Paper :droppedItems="droppedItems" ref="paperRef" @update-items="updateDroppedItems" />
+    </div>
+    <div class="side-buttons">
+      <button class="export-button" @click="exportAsJPG">Export as JPG</button>
+      <button class="export-json-button" @click="exportLayoutToJson">
+        Export Layout to JSON
+      </button>
+      <input
+        type="file"
+        class="import-json-button"
+        @change="importLayoutFromJson"
+        accept=".json"
       />
     </div>
-    <button class="export-button" @click="exportAsJPG">Export as JPG</button>
-    <button class="export-json-button" @click="exportLayoutToJson">
-      Export Layout to JSON
-    </button>
-    <input
-      type="file"
-      class="import-json-button"
-      @change="importLayoutFromJson"
-      accept=".json"
-    />
   </div>
 </template>
+
 
 <script>
 import Palette from "./Palette.vue";
@@ -130,57 +129,47 @@ export default {
 
 <style>
 .app-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   height: 100vh;
-  position: relative;
-}
-
-.export-button {
-  position: absolute;
-  top: -30px;
-  right: -300px;
-  z-index: 2;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-}
-
-.export-json-button {
-  position: absolute;
-  top: 20px;
-  right: -300px;
-  z-index: 2;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-}
-
-.import-json-button {
-  position: absolute;
-  top: 60px;
-  right: -300px;
-  z-index: 2;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
+  gap: 1em;
+  padding: 1em;
 }
 
 .palette-section {
-  width: 200px;
+  grid-column: 1;
   background-color: #f0f0f0;
   overflow-y: auto;
+  padding: 1em;
 }
 
 .paper-section {
-  flex-grow: 1;
+  grid-column: 2;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
+.export-button,
+.export-json-button,
+.import-json-button {
+  display: block;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-bottom: 10px; /* Space between buttons */
+}
+
+/* Additional container for side buttons */
+.side-buttons {
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Align buttons to the start of the column */
+}
+
 </style>
+
+
