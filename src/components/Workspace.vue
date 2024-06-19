@@ -2,27 +2,21 @@
   <div class="app-container">
     <Palette class="palette-section" @addItemToPaper="addItemToPaper" />
     <div class="paper-section">
-      <Paper :droppedItems="droppedItems" ref="paperRef" @update-items="updateDroppedItems" />
+      <Paper :droppedItems="pageData.items" ref="paperRef" @update-items="updateDroppedItems" @selectItem="selectItem" />
     </div>
     <div class="side-buttons">
       <button class="export-button" @click="exportAsJPG">Export as JPG</button>
-      <button class="export-json-button" @click="exportLayoutToJson">
-        Export Layout to JSON
-      </button>
-      <input
-        type="file"
-        class="import-json-button"
-        @change="importLayoutFromJson"
-        accept=".json"
-      />
+      <!-- <button class="export-json-button" @click="exportLayoutToJson">Export Layout to JSON</button>
+      <input type="file" class="import-json-button" @change="importLayoutFromJson" accept=".json" /> -->
+      <Properties :selectedItem="selectedItem" @updateProperty="updateProperty" />
     </div>
   </div>
 </template>
 
-
 <script>
 import Palette from "./Palette.vue";
 import Paper from "./Paper.vue";
+import Properties from "./Properties.vue";
 import { ref, nextTick } from "vue";
 import html2canvas from "html2canvas";
 import { v4 as uuidv4 } from "uuid";
@@ -31,31 +25,48 @@ export default {
   components: {
     Palette,
     Paper,
+    Properties,
   },
-  setup() {
-    const droppedItems = ref([]);
+  props: {
+    pageData: Object,
+  },
+  setup(props, { emit }) {
+    const selectedItem = ref(null);
     const paperRef = ref(null);
 
     const updateDroppedItems = (updatedItems) => {
-      droppedItems.value = updatedItems;
+      emit("updateItem", props.pageData.pageIndex, updatedItems);
     };
 
     const addItemToPaper = (item) => {
-      droppedItems.value.push({ ...item, id: uuidv4(), x: 100, y: 100 });
+      const newItem = { ...item, id: uuidv4(), x: 100, y: 100 };
+      props.pageData.items.push(newItem);
+      updateDroppedItems(props.pageData.items);
+    };
+
+    const selectItem = (item) => {
+      selectedItem.value = item;
+      emit("selectItem", item);
+    };
+
+    const updateProperty = (property, value) => {
+      if (selectedItem.value) {
+        selectedItem.value[property] = value;
+        updateDroppedItems(props.pageData.items);
+      }
     };
 
     const importLayoutFromJson = async (event) => {
       const file = event.target.files[0];
-      if (!file) {
-        return;
-      }
+      if (!file) return;
 
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const importedData = JSON.parse(e.target.result);
           if (Array.isArray(importedData)) {
-            droppedItems.value = importedData;
+            props.pageData.items = importedData;
+            updateDroppedItems(props.pageData.items);
           } else {
             console.error("Invalid JSON format");
             alert("Invalid JSON format");
@@ -70,18 +81,7 @@ export default {
 
     const exportLayoutToJson = async () => {
       await nextTick();
-      let layoutData = paperRef.value
-        ? paperRef.value.serializeCurrentState()
-        : JSON.stringify(droppedItems.value, null, 2);
-      await paperRef.value.ensureImagesLoaded();
-      if (droppedItems.value.length === 0) {
-        // Get the layout data directly from Paper.vue
-        layoutData = paperRef.value.serializeCurrentState();
-      } else {
-        // Use the existing droppedItems data
-        layoutData = JSON.stringify(droppedItems.value, null, 2);
-      }
-
+      const layoutData = JSON.stringify(props.pageData.items, null, 2);
       const blob = new Blob([layoutData], { type: "application/json" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -90,14 +90,24 @@ export default {
       URL.revokeObjectURL(link.href);
     };
 
+    const ensureImagesLoaded = async () => {
+      const images = paperRef.value.$el.querySelectorAll("img");
+      const promises = Array.from(images).map((img) => {
+        return new Promise((resolve, reject) => {
+          if (img.complete) {
+            resolve();
+          } else {
+            img.onload = resolve;
+            img.onerror = reject;
+          }
+        });
+      });
+      await Promise.all(promises);
+    };
+
     const exportAsJPG = async () => {
-      // Ensures that Vue has updated the DOM before capturing the image
       await nextTick();
-
-      // Call the method from Paper.vue to ensure all images have loaded
-      await paperRef.value.ensureImagesLoaded();
-
-      // Use html2canvas to capture the content
+      await ensureImagesLoaded();
       const paperElement = paperRef.value.$el;
       html2canvas(paperElement, { allowTaint: true, useCORS: true })
         .then((canvas) => {
@@ -105,9 +115,9 @@ export default {
           const link = document.createElement("a");
           link.href = dataURL;
           link.download = "paper-export.jpg";
-          document.body.appendChild(link); // Append the link to the body
+          document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link); // Clean up and remove the link
+          document.body.removeChild(link);
         })
         .catch((error) => {
           console.error("Error exporting as JPG:", error);
@@ -115,13 +125,15 @@ export default {
     };
 
     return {
-      droppedItems,
+      selectedItem,
       addItemToPaper,
       exportAsJPG,
       paperRef,
       exportLayoutToJson,
       updateDroppedItems,
       importLayoutFromJson,
+      selectItem,
+      updateProperty,
     };
   },
 };
@@ -130,24 +142,31 @@ export default {
 <style>
 .app-container {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr 2fr 1fr;
   height: 100vh;
   gap: 1em;
   padding: 1em;
+  align-items: start;
+}
+
+.palette-section,
+.paper-section,
+.side-buttons {
+  height: 100%;
 }
 
 .palette-section {
-  grid-column: 1;
   background-color: #f0f0f0;
   overflow-y: auto;
   padding: 1em;
 }
 
 .paper-section {
-  grid-column: 2;
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #fff;
+  padding: 1em;
 }
 
 .export-button,
@@ -159,17 +178,14 @@ export default {
   border: none;
   padding: 10px 20px;
   cursor: pointer;
-  margin-bottom: 10px; /* Space between buttons */
+  margin-bottom: 10px;
 }
 
-/* Additional container for side buttons */
 .side-buttons {
-  grid-column: 3;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* Align buttons to the start of the column */
+  align-items: flex-start;
+  background-color: #f9f9f9;
+  padding: 1em;
 }
-
 </style>
-
-

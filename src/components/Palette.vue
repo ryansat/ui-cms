@@ -33,7 +33,6 @@ export default {
         items.value = data;
       } catch (error) {
         console.error("Fetch error:", error);
-        // Fallback to default items or handle the error as needed
       }
     };
 
@@ -50,8 +49,8 @@ export default {
 
 <style scoped>
 .palette {
-  width: 200px;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: #f0f0f0;
 }
 
@@ -68,7 +67,7 @@ export default {
 
 .palette-image {
   max-width: 100%;
-  max-height: 50px; /* Adjust as needed */
+  max-height: 50px;
   margin-right: 10px;
 }
 </style>
