@@ -39,7 +39,7 @@ export default {
     };
 
     const addItemToPaper = (item) => {
-      const newItem = { ...item, id: uuidv4(), x: 100, y: 100 };
+      const newItem = { ...item, id: uuidv4(), x: 100, y: 100, width: 400, height: 300 };
       props.pageData.items.push(newItem);
       updateDroppedItems(props.pageData.items);
     };

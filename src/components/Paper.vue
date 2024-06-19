@@ -4,12 +4,20 @@
       v-for="item in localDroppedItems"
       :key="item.id"
       class="dropped-item"
-      :style="{ left: item.x + 'px', top: item.y + 'px' }"
+      :style="{ left: item.x + 'px', top: item.y + 'px', width: item.width + 'px', height: item.height + 'px' }"
       draggable="true"
       @dragstart="startDrag(item, $event)"
       @click="selectItem(item)"
     >
-      <template v-if="item.imageUrl">
+      <template v-if="item.type === 'table'">
+        <Table
+          :data="item"
+          :pageIndex="0"
+          :itemsPerPage="10"
+          :style="{ width: '100%', height: '100%' }"
+        />
+      </template>
+      <template v-else-if="item.imageUrl">
         <img
           :src="item.imageUrl"
           alt="Dropped Image"
@@ -30,8 +38,10 @@
 <script>
 import { ref, onMounted, watch } from "vue";
 import { v4 as uuidv4 } from "uuid";
+import Table from "./Table.vue";
 
 export default {
+  components: { Table },
   props: {
     droppedItems: Array,
   },
@@ -84,6 +94,8 @@ export default {
             event.clientX - event.currentTarget.getBoundingClientRect().left;
           item.y =
             event.clientY - event.currentTarget.getBoundingClientRect().top;
+          item.width = 400;  // Default width for table
+          item.height = 300; // Default height for table
           localDroppedItems.value.push(item);
         }
         emit("update-items", localDroppedItems.value);

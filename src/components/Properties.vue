@@ -8,11 +8,9 @@
       <label>Y:</label>
       <input type="number" v-model.number="selectedItem.y" @input="updateProperty('y', selectedItem.y)" />
     </div>
-    <div>
+    <div v-if="selectedItem.type === 'table'">
       <label>Width:</label>
       <input type="number" v-model.number="selectedItem.width" @input="updateProperty('width', selectedItem.width)" />
-    </div>
-    <div>
       <label>Height:</label>
       <input type="number" v-model.number="selectedItem.height" @input="updateProperty('height', selectedItem.height)" />
     </div>
@@ -33,8 +31,10 @@ watch(props.selectedItem, (newItem) => {
   if (newItem) {
     emit('updateProperty', 'x', newItem.x)
     emit('updateProperty', 'y', newItem.y)
-    emit('updateProperty', 'width', newItem.width)
-    emit('updateProperty', 'height', newItem.height)
+    if (newItem.type === 'table') {
+      emit('updateProperty', 'width', newItem.width)
+      emit('updateProperty', 'height', newItem.height)
+    }
   }
 })
 </script>
@@ -42,7 +42,7 @@ watch(props.selectedItem, (newItem) => {
 <style scoped>
 .properties {
   width: 100%;
-  /* background: #f9f9f9; */
+  background: #f9f9f9;
   padding: 10px;
   border-radius: 4px;
 }

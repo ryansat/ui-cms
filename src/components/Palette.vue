@@ -24,13 +24,18 @@ import { ref, onMounted } from "vue";
 export default {
   setup() {
     const items = ref([]);
-
     const fetchItems = async () => {
       try {
         const response = await fetch("/mockData.json");
         if (!response.ok) throw new Error("Network response was not ok.");
         const data = await response.json();
         items.value = data;
+        
+        // Fetch table data
+        const tableResponse = await fetch("/tableData.json");
+        if (!tableResponse.ok) throw new Error("Network response was not ok.");
+        const tableData = await tableResponse.json();
+        items.value.push({ ...tableData, name: "Table", type: "table" });
       } catch (error) {
         console.error("Fetch error:", error);
       }
