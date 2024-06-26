@@ -48,11 +48,7 @@ export default {
       event.dataTransfer.setData("application/json", JSON.stringify(item));
     };
 
-    const addItemToPaper = (item) => {
-      emit("addItemToPaper", item);
-    };
-
-    return { items, startDrag, addItemToPaper };
+    return { items, startDrag };
   },
 };
 </script>

@@ -12,6 +12,7 @@
         ref="paperRef"
         @update-items="updateDroppedItems"
         @selectItem="selectItem"
+        @addItemToPaper="addItemToPaper"
         size="A4"
       />
     </div>
@@ -20,7 +21,6 @@
         :selectedItem="selectedItem"
         :droppedItems="pageData.items"
         @updateProperty="updateProperty"
-        @exportAsJPG="exportAsJPG"
         @updateItemsOrder="updateItemsOrder"
       />
     </div>
