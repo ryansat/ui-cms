@@ -1,35 +1,33 @@
 <template>
   <div class="page-controls">
-    <div class="button-group">
-      <button @click="addNewPage">Add New Page</button>
-      <button @click="saveConfiguration">Save Configuration</button>
-      <input
-        type="file"
-        @change="loadConfiguration"
-      />
-      <button
-        @click="prevPage"
-        :disabled="currentPageIndex === 0"
-      >
-        Previous Page
-      </button>
-      <button
-        @click="nextPage"
-        :disabled="currentPageIndex === pages.length - 1"
-      >
-        Next Page
-      </button>
-      <input
-        type="number"
-        v-model.number="jumpPageIndex"
-        @input="jumpToPage"
-        min="1"
-        :max="pages.length"
-      />
-      <button @click="showExportModal">Export</button>
-      <button @click="showSizeAdjustmentModal">Adjust Page Size</button>
-    </div>
+    <button @click="addNewPage">Add New Page</button>
+    <button @click="saveConfiguration">Save Configuration</button>
+    <input
+      type="file"
+      @change="loadConfiguration"
+    />
+    <button
+      @click="prevPage"
+      :disabled="currentPageIndex === 0"
+    >
+      Previous Page
+    </button>
+    <button
+      @click="nextPage"
+      :disabled="currentPageIndex === pages.length - 1"
+    >
+      Next Page
+    </button>
+    <input
+      type="number"
+      v-model.number="jumpPageIndex"
+      @input="jumpToPage"
+      min="1"
+      :max="pages.length"
+    />
     <p>Current Page: {{ currentPageIndex + 1 }} / {{ pages.length }}</p>
+    <button @click="showExportModal">Export</button>
+    <button @click="showSizeAdjustmentModal">Adjust Page Size</button>
     <ExportModal
       :visible="isExportModalVisible"
       @export="handleExport"
@@ -177,14 +175,7 @@ const handleSizeAdjustment = (size) => {
   padding-top: 10px; /* Add padding between the paragraph and the previous element */
 }
 
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px; /* Add space between buttons */
-}
-
-button {
-  margin: 5px;
+.page-controls button {
+  margin-right: 10px;
 }
 </style>

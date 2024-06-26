@@ -1,84 +1,64 @@
 <template>
   <div
     v-if="visible"
-    class="modal-overlay"
-    @click.self="closeModal"
+    class="modal"
   >
     <div class="modal-content">
-      <h3>Adjust Page Size</h3>
-      <label for="preset">Select preset:</label>
-      <select
-        id="preset"
-        v-model="selectedPreset"
-        @change="applyPreset"
+      <span
+        class="close"
+        @click="$emit('close')"
+        >&times;</span
       >
-        <option value="A4">A4 (210 x 297 mm)</option>
-        <option value="A3">A3 (297 x 420 mm)</option>
-        <option value="custom">Custom</option>
-      </select>
-      <div v-if="selectedPreset === 'custom'">
-        <label for="width">Width (px):</label>
+      <h2>Adjust Page Size</h2>
+      <div class="size-options">
+        <button @click="adjustSize('A4')">A4</button>
+        <button @click="adjustSize('A3')">A3</button>
+      </div>
+      <div class="custom-size">
+        <label>Custom Size</label>
+        <label>Width:</label>
         <input
           type="number"
-          id="width"
           v-model.number="customWidth"
         />
-        <label for="height">Height (px):</label>
+        <label>Height:</label>
         <input
           type="number"
-          id="height"
           v-model.number="customHeight"
         />
+        <button @click="adjustSize('custom')">Apply</button>
       </div>
-      <button @click="adjustSize">Apply</button>
-      <button @click="closeModal">Close</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref } from "vue";
 
 const props = defineProps({
   visible: Boolean,
 });
 const emit = defineEmits(["adjust", "close"]);
 
-const selectedPreset = ref("A4");
 const customWidth = ref(210);
 const customHeight = ref(297);
 
-const applyPreset = () => {
-  if (selectedPreset.value === "A4") {
-    customWidth.value = 210;
-    customHeight.value = 297;
-  } else if (selectedPreset.value === "A3") {
-    customWidth.value = 297;
-    customHeight.value = 420;
+const adjustSize = (size) => {
+  let dimensions;
+  if (size === "A4") {
+    dimensions = { width: 210, height: 297 };
+  } else if (size === "A3") {
+    dimensions = { width: 297, height: 420 };
+  } else {
+    dimensions = { width: customWidth.value, height: customHeight.value };
   }
-};
-
-const adjustSize = () => {
-  emit("adjust", { width: customWidth.value, height: customHeight.value });
-  closeModal();
-};
-
-const closeModal = () => {
+  emit("adjust", dimensions);
   emit("close");
 };
-
-watch(
-  () => props.visible,
-  (newVal) => {
-    if (newVal) {
-      applyPreset();
-    }
-  }
-);
 </script>
 
 <style scoped>
-.modal-overlay {
+.modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -88,14 +68,42 @@ watch(
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1000; /* Ensure modal is on top of other content */
 }
 
 .modal-content {
-  background-color: #fff;
+  background-color: white;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1001;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.modal-content h2 {
+  color: black; /* Set font color to black */
+}
+
+.size-options button {
+  margin: 5px;
+}
+
+.custom-size {
+  margin-top: 20px;
+}
+
+.custom-size label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.custom-size input {
+  width: 100px;
+  margin-bottom: 10px;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
 }
 </style>
