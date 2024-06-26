@@ -52,6 +52,15 @@
           @input="updateProperty('height', selectedItem.height)"
         />
       </div>
+      <div class="property">
+        <label>Image URL:</label>
+        <input
+          type="text"
+          v-model="selectedItem.imageUrl"
+          @input="updateProperty('imageUrl', selectedItem.imageUrl)"
+        />
+        <button @click="showUploadModal">Upload Image</button>
+      </div>
       <div class="current-size">
         <p>Current Size:</p>
         <p>Width: {{ selectedItem.width }}px</p>
@@ -75,11 +84,17 @@
         </li>
       </ul>
     </div>
+    <ImageUploadModal
+      :visible="isUploadModalVisible"
+      @upload="handleUpload"
+      @close="hideUploadModal"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, defineProps, defineEmits, watch } from "vue";
+import ImageUploadModal from "./ImageUploadModal.vue";
 
 const props = defineProps(["selectedItem", "droppedItems"]);
 const emit = defineEmits(["updateProperty", "updateItemsOrder"]);
@@ -88,6 +103,7 @@ const itemName = ref("");
 const itemLabel = ref("");
 const editing = ref(false);
 const draggedIndex = ref(null);
+const isUploadModalVisible = ref(false);
 
 const updateProperty = (property, value) => {
   emit("updateProperty", property, value);
@@ -116,6 +132,20 @@ const onDrop = (index) => {
   props.droppedItems.splice(index, 0, draggedItem);
   draggedIndex.value = null;
   emit("updateItemsOrder", props.droppedItems);
+};
+
+const showUploadModal = () => {
+  isUploadModalVisible.value = true;
+};
+
+const hideUploadModal = () => {
+  isUploadModalVisible.value = false;
+};
+
+const handleUpload = (imageUrl) => {
+  props.selectedItem.imageUrl = imageUrl;
+  updateProperty("imageUrl", imageUrl);
+  hideUploadModal();
 };
 
 watch(

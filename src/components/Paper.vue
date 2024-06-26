@@ -13,6 +13,7 @@
         left: item.x + 'px',
         width: item.width + 'px',
         height: item.height + 'px',
+        zIndex: index,
       }"
       @mousedown="startDrag(item, $event)"
       @click="selectItem(item)"
@@ -51,7 +52,6 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, watch } from "vue";
-import { v4 as uuidv4 } from "uuid";
 
 const props = defineProps(["droppedItems"]);
 const emit = defineEmits(["update-items", "selectItem", "addItemToPaper"]);
@@ -60,12 +60,10 @@ const selectedItem = ref(null);
 const dragStart = ref({ x: 0, y: 0 });
 const resizing = ref(false);
 const resizingHandle = ref("");
-const dragging = ref(false);
 
 const startDrag = (item, event) => {
   selectedItem.value = item;
   dragStart.value = { x: event.clientX - item.x, y: event.clientY - item.y };
-  dragging.value = true;
   document.addEventListener("mousemove", onDrag);
   document.addEventListener("mouseup", stopDrag);
 };
@@ -79,7 +77,6 @@ const onDrag = (event) => {
 };
 
 const stopDrag = () => {
-  dragging.value = false;
   document.removeEventListener("mousemove", onDrag);
   document.removeEventListener("mouseup", stopDrag);
 };
@@ -135,12 +132,8 @@ const onDrop = (event) => {
   const data = event.dataTransfer.getData("application/json");
   if (data) {
     const item = JSON.parse(data);
-    const rect = event.target.getBoundingClientRect();
-    item.id = uuidv4();
-    item.x = event.clientX - rect.left - 50; // Adjust position
-    item.y = event.clientY - rect.top - 50; // Adjust position
-    item.width = item.width || 100;
-    item.height = item.height || 100;
+    item.x = event.clientX - 50; // Adjust position
+    item.y = event.clientY - 50; // Adjust position
     emit("addItemToPaper", item);
   }
 };
