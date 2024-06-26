@@ -1,14 +1,27 @@
 <template>
   <div class="app-container">
-    <Palette class="palette-section" @addItemToPaper="addItemToPaper" />
-    <div class="paper-section">
-      <Paper :droppedItems="pageData.items" ref="paperRef" @update-items="updateDroppedItems" @selectItem="selectItem" />
+    <div class="left-panel">
+      <Palette
+        class="palette-section"
+        @addItemToPaper="addItemToPaper"
+      />
     </div>
-    <div class="side-buttons">
-      <button class="export-button" @click="exportAsJPG">Export as JPG</button>
-      <!-- <button class="export-json-button" @click="exportLayoutToJson">Export Layout to JSON</button>
-      <input type="file" class="import-json-button" @change="importLayoutFromJson" accept=".json" /> -->
-      <Properties :selectedItem="selectedItem" @updateProperty="updateProperty" />
+    <div class="paper-section">
+      <Paper
+        :droppedItems="pageData.items"
+        ref="paperRef"
+        @update-items="updateDroppedItems"
+        @selectItem="selectItem"
+        size="A4"
+      />
+    </div>
+    <div class="properties-panel">
+      <PropertiesPanel
+        :selectedItem="selectedItem"
+        :droppedItems="pageData.items"
+        @updateProperty="updateProperty"
+        @updateItemsOrder="updateItemsOrder"
+      />
     </div>
   </div>
 </template>
@@ -16,7 +29,7 @@
 <script>
 import Palette from "./Palette.vue";
 import Paper from "./Paper.vue";
-import Properties from "./Properties.vue";
+import PropertiesPanel from "./PropertiesPanel.vue";
 import { ref, nextTick } from "vue";
 import html2canvas from "html2canvas";
 import { v4 as uuidv4 } from "uuid";
@@ -25,7 +38,7 @@ export default {
   components: {
     Palette,
     Paper,
-    Properties,
+    PropertiesPanel,
   },
   props: {
     pageData: Object,
@@ -39,9 +52,18 @@ export default {
     };
 
     const addItemToPaper = (item) => {
-      const newItem = { ...item, id: uuidv4(), x: 100, y: 100, width: 400, height: 300 };
+      const newItem = {
+        ...item,
+        id: uuidv4(),
+        x: 100,
+        y: 100,
+        width: item.width || 100,
+        height: item.height || 100,
+        label: item.label || "",
+      };
       props.pageData.items.push(newItem);
       updateDroppedItems(props.pageData.items);
+      selectItem(newItem);
     };
 
     const selectItem = (item) => {
@@ -54,6 +76,11 @@ export default {
         selectedItem.value[property] = value;
         updateDroppedItems(props.pageData.items);
       }
+    };
+
+    const updateItemsOrder = (newOrder) => {
+      props.pageData.items = newOrder;
+      updateDroppedItems(newOrder);
     };
 
     const importLayoutFromJson = async (event) => {
@@ -134,6 +161,7 @@ export default {
       importLayoutFromJson,
       selectItem,
       updateProperty,
+      updateItemsOrder,
     };
   },
 };
@@ -142,16 +170,15 @@ export default {
 <style>
 .app-container {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr; /* Create a three-column grid */
   height: 100vh;
-  gap: 1em;
-  padding: 1em;
+  gap: 1em; /* Gap between the columns */
   align-items: start;
 }
 
 .palette-section,
 .paper-section,
-.side-buttons {
+.properties-panel {
   height: 100%;
 }
 
@@ -165,27 +192,15 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #fff;
+  background-color: #ffffff; /* Set background color for paper */
   padding: 1em;
+  border: 1px solid #ccc; /* Optional: Add a border to the paper section */
 }
 
-.export-button,
-.export-json-button,
-.import-json-button {
-  display: block;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.side-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  background-color: #f9f9f9;
-  padding: 1em;
+.paper-section .paper {
+  width: 210mm; /* Width for A4 paper */
+  height: 297mm; /* Height for A4 paper */
+  background-color: #fff; /* Paper background color */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
 }
 </style>

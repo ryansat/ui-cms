@@ -22,7 +22,8 @@
 import { ref, onMounted } from "vue";
 
 export default {
-  setup() {
+  emits: ["addItemToPaper"],
+  setup(_, { emit }) {
     const items = ref([]);
     const fetchItems = async () => {
       try {
@@ -30,7 +31,7 @@ export default {
         if (!response.ok) throw new Error("Network response was not ok.");
         const data = await response.json();
         items.value = data;
-        
+
         // Fetch table data
         const tableResponse = await fetch("/tableData.json");
         if (!tableResponse.ok) throw new Error("Network response was not ok.");
@@ -47,7 +48,11 @@ export default {
       event.dataTransfer.setData("application/json", JSON.stringify(item));
     };
 
-    return { items, startDrag };
+    const addItemToPaper = (item) => {
+      emit("addItemToPaper", item);
+    };
+
+    return { items, startDrag, addItemToPaper };
   },
 };
 </script>
@@ -56,23 +61,29 @@ export default {
 .palette {
   width: 100%;
   height: 100%;
-  background-color: #f0f0f0;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-gap: 10px;
 }
 
 .item {
   cursor: grab;
-  margin: 10px;
   padding: 10px;
   border: 1px solid #ddd;
   background-color: white;
   color: #333;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
 }
 
 .palette-image {
   max-width: 100%;
   max-height: 50px;
-  margin-right: 10px;
+  margin-bottom: 10px;
 }
 </style>
