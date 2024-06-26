@@ -20,6 +20,7 @@
         :selectedItem="selectedItem"
         :droppedItems="pageData.items"
         @updateProperty="updateProperty"
+        @exportAsJPG="exportAsJPG"
         @updateItemsOrder="updateItemsOrder"
       />
     </div>
@@ -76,11 +77,6 @@ export default {
         selectedItem.value[property] = value;
         updateDroppedItems(props.pageData.items);
       }
-    };
-
-    const updateItemsOrder = (newOrder) => {
-      props.pageData.items = newOrder;
-      updateDroppedItems(newOrder);
     };
 
     const importLayoutFromJson = async (event) => {
@@ -149,6 +145,11 @@ export default {
         .catch((error) => {
           console.error("Error exporting as JPG:", error);
         });
+    };
+
+    const updateItemsOrder = (newOrder) => {
+      props.pageData.items = newOrder;
+      updateDroppedItems(newOrder);
     };
 
     return {
