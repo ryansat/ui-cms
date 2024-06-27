@@ -22,6 +22,7 @@
       }"
       @mousedown.stop="startDrag(item, $event)"
       @click.stop="selectItem(item)"
+      @dblclick.stop="editItem(item)"
       @dragover.prevent="onDragOverItem(item, $event)"
       @drop="onDropItem(item, $event)"
     >
@@ -74,7 +75,7 @@ const emit = defineEmits([
   "update-items",
   "selectItem",
   "addItemToPaper",
-  "deleteItem",
+  "editItem",
 ]);
 
 const selectedItem = ref(null);
@@ -107,6 +108,11 @@ const stopDrag = () => {
 const selectItem = (item) => {
   selectedItem.value = item;
   emit("selectItem", item);
+};
+
+const editItem = (item) => {
+  selectedItem.value = item;
+  emit("editItem", item);
 };
 
 const startResize = (item, handle, event) => {
@@ -200,15 +206,6 @@ const onDropItem = (item, event) => {
 const deselectAll = () => {
   selectedItem.value = null;
   emit("selectItem", null);
-};
-
-const deleteItem = (itemId) => {
-  const index = props.droppedItems.findIndex((item) => item.id === itemId);
-  if (index !== -1) {
-    props.droppedItems.splice(index, 1);
-    emit("update-items", props.droppedItems);
-    deselectAll();
-  }
 };
 
 watch(
