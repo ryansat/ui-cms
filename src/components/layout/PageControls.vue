@@ -43,8 +43,8 @@
 
 <script setup>
 import { ref } from "vue";
-import ExportModal from "./ExportModal.vue";
-import SizeAdjustmentModal from "./SizeAdjustmentModal.vue";
+import ExportModal from "../common/ExportModal.vue";
+import SizeAdjustmentModal from "../layout/SizeAdjustmentModal.vue";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 

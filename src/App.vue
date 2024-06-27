@@ -10,8 +10,8 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import Workspace from "./components/Workspace.vue";
-import PageControls from "./components/PageControls.vue";
+import Workspace from "./Workspace.vue";
+import PageControls from "./components/layout/PageControls.vue";
 
 const pages = ref([{ items: [] }]);
 const currentPageIndex = ref(0);

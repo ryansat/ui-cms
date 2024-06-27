@@ -94,7 +94,7 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, watch } from "vue";
-import ImageUploadModal from "./ImageUploadModal.vue";
+import ImageUploadModal from "../common/ImageUploadModal.vue";
 
 const props = defineProps(["selectedItem", "droppedItems"]);
 const emit = defineEmits(["updateProperty", "updateItemsOrder"]);

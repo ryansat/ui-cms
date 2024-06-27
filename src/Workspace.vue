@@ -39,10 +39,10 @@
 </template>
 
 <script>
-import Palette from "./Palette.vue";
-import Paper from "./Paper.vue";
-import PropertiesPanel from "./PropertiesPanel.vue";
-import PageControls from "./PageControls.vue";
+import Palette from "./components/palette/Palette.vue";
+import Paper from "./components/paper/Paper.vue";
+import PropertiesPanel from "./components/layout/PropertiesPanel.vue";
+import PageControls from "./components/layout/PageControls.vue";
 import { ref } from "vue";
 import { v4 as uuidv4 } from "uuid";
 
