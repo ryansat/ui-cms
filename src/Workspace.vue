@@ -25,6 +25,7 @@
           @selectItem="selectItem"
           @addItemToPaper="addItemToPaper"
           @deleteItem="deleteItem"
+          @editItem="editItem"
         />
       </div>
       <div class="properties-panel">
@@ -154,6 +155,10 @@ export default {
       }
     };
 
+    const editItem = (item) => {
+      selectedItem.value = item;
+    };
+
     return {
       pages,
       currentPageIndex,
@@ -172,6 +177,7 @@ export default {
       hideImageUploadModal,
       deleteItem,
       renameItem,
+      editItem,
     };
   },
 };

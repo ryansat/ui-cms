@@ -24,32 +24,32 @@
         <label>X:</label>
         <input
           type="number"
-          v-model.number="itemX"
-          @input="updateProperty('x', itemX)"
+          v-model.number="selectedItem.x"
+          @input="updateProperty('x', selectedItem.x)"
         />
       </div>
       <div class="property">
         <label>Y:</label>
         <input
           type="number"
-          v-model.number="itemY"
-          @input="updateProperty('y', itemY)"
+          v-model.number="selectedItem.y"
+          @input="updateProperty('y', selectedItem.y)"
         />
       </div>
       <div class="property">
         <label>Width:</label>
         <input
           type="number"
-          v-model.number="itemWidth"
-          @input="updateProperty('width', itemWidth)"
+          v-model.number="selectedItem.width"
+          @input="updateProperty('width', selectedItem.width)"
         />
       </div>
       <div class="property">
         <label>Height:</label>
         <input
           type="number"
-          v-model.number="itemHeight"
-          @input="updateProperty('height', itemHeight)"
+          v-model.number="selectedItem.height"
+          @input="updateProperty('height', selectedItem.height)"
         />
       </div>
       <div class="property">
@@ -63,8 +63,8 @@
       </div>
       <div class="current-size">
         <p>Current Size:</p>
-        <p>Width: {{ itemWidth }}px</p>
-        <p>Height: {{ itemHeight }}px</p>
+        <p>Width: {{ selectedItem.width }}px</p>
+        <p>Height: {{ selectedItem.height }}px</p>
       </div>
     </div>
     <div class="layers">
@@ -81,7 +81,6 @@
           :class="{ selected: selectedItem && selectedItem.id === item.id }"
         >
           {{ item.label || item.name }}
-          <button @click="deleteItem(item.id)">Delete</button>
         </li>
       </ul>
     </div>
@@ -98,14 +97,10 @@ import { ref, defineProps, defineEmits, watch } from "vue";
 import ImageUploadModal from "../common/ImageUploadModal.vue";
 
 const props = defineProps(["selectedItem", "droppedItems"]);
-const emit = defineEmits(["updateProperty", "updateItemsOrder", "deleteItem"]);
+const emit = defineEmits(["updateProperty", "updateItemsOrder"]);
 
 const itemName = ref("");
 const itemLabel = ref("");
-const itemX = ref(0);
-const itemY = ref(0);
-const itemWidth = ref(0);
-const itemHeight = ref(0);
 const editing = ref(false);
 const draggedIndex = ref(null);
 const isUploadModalVisible = ref(false);
@@ -155,30 +150,18 @@ const handleUpload = (imageUrl) => {
   hideUploadModal();
 };
 
-const deleteItem = (itemId) => {
-  emit("deleteItem", itemId);
-};
-
 watch(
   () => props.selectedItem,
   (newItem) => {
     if (newItem) {
       itemName.value = newItem.name || "";
       itemLabel.value = newItem.label || "";
-      itemX.value = newItem.x || 0;
-      itemY.value = newItem.y || 0;
-      itemWidth.value = newItem.width || 0;
-      itemHeight.value = newItem.height || 0;
     } else {
       itemName.value = "";
       itemLabel.value = "";
-      itemX.value = 0;
-      itemY.value = 0;
-      itemWidth.value = 0;
-      itemHeight.value = 0;
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 </script>
 
@@ -241,9 +224,5 @@ watch(
 
 .layers li.selected {
   background-color: #ddd;
-}
-
-.layers li button {
-  margin-left: 10px;
 }
 </style>
