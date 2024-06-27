@@ -215,6 +215,7 @@ export default {
   background-color: #f0f0f0;
   overflow-y: auto;
   padding: 1em;
+  margin-left: 1em; /* Add margin to the left */
 }
 
 .paper-section {
