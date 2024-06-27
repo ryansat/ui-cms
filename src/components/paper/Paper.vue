@@ -22,7 +22,6 @@
       }"
       @mousedown.stop="startDrag(item, $event)"
       @click.stop="selectItem(item)"
-      @dblclick.stop="editItem(item)"
       @dragover.prevent="onDragOverItem(item, $event)"
       @drop="onDropItem(item, $event)"
     >
@@ -76,13 +75,14 @@ const emit = defineEmits([
   "selectItem",
   "addItemToPaper",
   "deleteItem",
-  "editItem",
 ]);
 
 const selectedItem = ref(null);
 const dragStart = ref({ x: 0, y: 0 });
 const resizing = ref(false);
 const resizingHandle = ref("");
+const initialAspectRatio = ref(null);
+const isShiftPressed = ref(false);
 
 const startDrag = (item, event) => {
   selectedItem.value = item;
@@ -118,6 +118,8 @@ const startResize = (item, handle, event) => {
     width: item.width,
     height: item.height,
   };
+  initialAspectRatio.value = item.width / item.height;
+  isShiftPressed.value = event.shiftKey;
   document.addEventListener("mousemove", onResize);
   document.addEventListener("mouseup", stopResize);
 };
@@ -126,20 +128,38 @@ const onResize = (event) => {
   if (selectedItem.value && resizing.value) {
     const deltaX = event.clientX - dragStart.value.x;
     const deltaY = event.clientY - dragStart.value.y;
+
     if (resizingHandle.value.includes("right")) {
       selectedItem.value.width = dragStart.value.width + deltaX;
+      if (isShiftPressed.value) {
+        selectedItem.value.height =
+          selectedItem.value.width / initialAspectRatio.value;
+      }
     }
     if (resizingHandle.value.includes("left")) {
       selectedItem.value.width = dragStart.value.width - deltaX;
       selectedItem.value.x = event.clientX;
+      if (isShiftPressed.value) {
+        selectedItem.value.height =
+          selectedItem.value.width / initialAspectRatio.value;
+      }
     }
     if (resizingHandle.value.includes("bottom")) {
       selectedItem.value.height = dragStart.value.height + deltaY;
+      if (isShiftPressed.value) {
+        selectedItem.value.width =
+          selectedItem.value.height * initialAspectRatio.value;
+      }
     }
     if (resizingHandle.value.includes("top")) {
       selectedItem.value.height = dragStart.value.height - deltaY;
       selectedItem.value.y = event.clientY;
+      if (isShiftPressed.value) {
+        selectedItem.value.width =
+          selectedItem.value.height * initialAspectRatio.value;
+      }
     }
+
     emit("update-items", props.droppedItems);
   }
 };
@@ -182,11 +202,6 @@ const deselectAll = () => {
   emit("selectItem", null);
 };
 
-const editItem = (item) => {
-  selectedItem.value = item;
-  emit("editItem", item);
-};
-
 const deleteItem = (itemId) => {
   const index = props.droppedItems.findIndex((item) => item.id === itemId);
   if (index !== -1) {
@@ -213,14 +228,6 @@ watch(
   },
   { immediate: true, deep: true }
 );
-
-const handleKeyDown = (event) => {
-  if (event.key === "Delete" && selectedItem.value) {
-    deleteItem(selectedItem.value.id);
-  }
-};
-
-document.addEventListener("keydown", handleKeyDown);
 </script>
 
 <style scoped>
