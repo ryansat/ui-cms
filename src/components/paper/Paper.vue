@@ -58,14 +58,7 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  defineProps,
-  defineEmits,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-} from "vue";
+import { ref, defineProps, defineEmits, watch } from "vue";
 
 const props = defineProps({
   droppedItems: {
@@ -195,20 +188,6 @@ const deleteItem = (itemId) => {
     deselectAll();
   }
 };
-
-const handleKeyDown = (event) => {
-  if (event.key === "Delete" && selectedItem.value) {
-    deleteItem(selectedItem.value.id);
-  }
-};
-
-onMounted(() => {
-  document.addEventListener("keydown", handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("keydown", handleKeyDown);
-});
 
 watch(
   () => props.droppedItems,

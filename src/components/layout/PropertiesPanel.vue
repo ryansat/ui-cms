@@ -24,32 +24,32 @@
         <label>X:</label>
         <input
           type="number"
-          v-model.number="selectedItem.x"
-          @input="updateProperty('x', selectedItem.x)"
+          v-model.number="itemX"
+          @input="updateProperty('x', itemX)"
         />
       </div>
       <div class="property">
         <label>Y:</label>
         <input
           type="number"
-          v-model.number="selectedItem.y"
-          @input="updateProperty('y', selectedItem.y)"
+          v-model.number="itemY"
+          @input="updateProperty('y', itemY)"
         />
       </div>
       <div class="property">
         <label>Width:</label>
         <input
           type="number"
-          v-model.number="selectedItem.width"
-          @input="updateProperty('width', selectedItem.width)"
+          v-model.number="itemWidth"
+          @input="updateProperty('width', itemWidth)"
         />
       </div>
       <div class="property">
         <label>Height:</label>
         <input
           type="number"
-          v-model.number="selectedItem.height"
-          @input="updateProperty('height', selectedItem.height)"
+          v-model.number="itemHeight"
+          @input="updateProperty('height', itemHeight)"
         />
       </div>
       <div class="property">
@@ -63,8 +63,8 @@
       </div>
       <div class="current-size">
         <p>Current Size:</p>
-        <p>Width: {{ selectedItem.width }}px</p>
-        <p>Height: {{ selectedItem.height }}px</p>
+        <p>Width: {{ itemWidth }}px</p>
+        <p>Height: {{ itemHeight }}px</p>
       </div>
     </div>
     <div class="layers">
@@ -77,12 +77,10 @@
           @dragstart="onDragStart(index, $event)"
           @dragover.prevent
           @drop="onDrop(index)"
+          @dblclick="editLabel(item)"
           :class="{ selected: selectedItem && selectedItem.id === item.id }"
         >
-          <input
-            v-model="item.name"
-            @change="renameItem(item, item.name)"
-          />
+          {{ item.label || item.name }}
           <button @click="deleteItem(item.id)">Delete</button>
         </li>
       </ul>
@@ -100,15 +98,14 @@ import { ref, defineProps, defineEmits, watch } from "vue";
 import ImageUploadModal from "../common/ImageUploadModal.vue";
 
 const props = defineProps(["selectedItem", "droppedItems"]);
-const emit = defineEmits([
-  "updateProperty",
-  "updateItemsOrder",
-  "deleteItem",
-  "renameItem",
-]);
+const emit = defineEmits(["updateProperty", "updateItemsOrder", "deleteItem"]);
 
 const itemName = ref("");
 const itemLabel = ref("");
+const itemX = ref(0);
+const itemY = ref(0);
+const itemWidth = ref(0);
+const itemHeight = ref(0);
 const editing = ref(false);
 const draggedIndex = ref(null);
 const isUploadModalVisible = ref(false);
@@ -158,11 +155,6 @@ const handleUpload = (imageUrl) => {
   hideUploadModal();
 };
 
-const renameItem = (item, newName) => {
-  item.name = newName;
-  emit("renameItem", item);
-};
-
 const deleteItem = (itemId) => {
   emit("deleteItem", itemId);
 };
@@ -173,22 +165,26 @@ watch(
     if (newItem) {
       itemName.value = newItem.name || "";
       itemLabel.value = newItem.label || "";
-      emit("updateProperty", "x", newItem.x);
-      emit("updateProperty", "y", newItem.y);
-      emit("updateProperty", "width", newItem.width);
-      emit("updateProperty", "height", newItem.height);
+      itemX.value = newItem.x || 0;
+      itemY.value = newItem.y || 0;
+      itemWidth.value = newItem.width || 0;
+      itemHeight.value = newItem.height || 0;
     } else {
       itemName.value = "";
       itemLabel.value = "";
+      itemX.value = 0;
+      itemY.value = 0;
+      itemWidth.value = 0;
+      itemHeight.value = 0;
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 </script>
 
 <style scoped>
 .properties {
-  width: 150%;
+  width: 100%;
   background: #f9f9f9;
   padding: 10px;
   border-radius: 4px;
@@ -241,23 +237,13 @@ watch(
 .layers li {
   padding: 5px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.layers li input {
-  flex-grow: 1;
-  margin-right: 10px;
-}
-
-.layers li button {
-  background-color: red;
-  color: white;
-  border: none;
-  cursor: pointer;
 }
 
 .layers li.selected {
   background-color: #ddd;
+}
+
+.layers li button {
+  margin-left: 10px;
 }
 </style>
