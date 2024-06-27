@@ -1,19 +1,25 @@
 <template>
   <div class="palette">
     <div
-      v-for="item in items"
-      :key="item.id"
-      draggable="true"
-      @dragstart="startDrag(item, $event)"
-      class="item"
-    >
-      <img
-        v-if="item.imageUrl"
-        :src="item.imageUrl"
-        alt="Image"
-        class="palette-image"
-      />
-      <span v-else>{{ item.name }}</span>
+      v-if="loading"
+      class="spinner"
+    ></div>
+    <div v-else>
+      <div
+        v-for="item in items"
+        :key="item.id"
+        draggable="true"
+        @dragstart="startDrag(item, $event)"
+        class="item"
+      >
+        <img
+          v-if="item.imageUrl"
+          :src="item.imageUrl"
+          alt="Image"
+          class="palette-image"
+        />
+        <span v-else>{{ item.name }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -25,6 +31,8 @@ export default {
   emits: ["addItemToPaper"],
   setup(_, { emit }) {
     const items = ref([]);
+    const loading = ref(true);
+
     const fetchItems = async () => {
       try {
         const response = await fetch("/mockData.json");
@@ -39,6 +47,8 @@ export default {
         items.value.push({ ...tableData, name: "Table", type: "table" });
       } catch (error) {
         console.error("Fetch error:", error);
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -48,7 +58,7 @@ export default {
       event.dataTransfer.setData("application/json", JSON.stringify(item));
     };
 
-    return { items, startDrag };
+    return { items, loading, startDrag };
   },
 };
 </script>
@@ -63,6 +73,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   grid-gap: 10px;
+  position: relative;
 }
 
 .item {
@@ -81,5 +92,24 @@ export default {
   max-width: 100%;
   max-height: 50px;
   margin-bottom: 10px;
+}
+
+.spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin: -25px 0 0 -25px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

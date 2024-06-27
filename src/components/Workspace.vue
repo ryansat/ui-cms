@@ -155,6 +155,7 @@ export default {
   background-color: #f0f0f0;
   overflow-y: auto;
   padding: 1em;
+  margin-right: 1em; /* Add margin to the right to create space between palette and paper */
 }
 
 .paper-section {
@@ -169,5 +170,10 @@ export default {
 .paper-section .paper {
   background-color: #fff; /* Paper background color */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
+  margin-left: 1em;
+}
+
+.properties-panel {
+  margin-left: 1em; /* Add margin to the left to create space between paper and properties panel */
 }
 </style>

@@ -3,6 +3,7 @@
     class="paper"
     @dragover.prevent
     @drop="onDrop"
+    @mousedown="deselectAll"
     :style="{
       width: paperSize.width + 'mm',
       height: paperSize.height + 'mm',
@@ -19,8 +20,8 @@
         height: item.height + 'px',
         zIndex: index,
       }"
-      @mousedown="startDrag(item, $event)"
-      @click="selectItem(item)"
+      @mousedown.stop="startDrag(item, $event)"
+      @click.stop="selectItem(item)"
     >
       <img
         v-if="item.imageUrl"
@@ -149,6 +150,11 @@ const onDrop = (event) => {
     item.y = event.clientY - 50; // Adjust position
     emit("addItemToPaper", item);
   }
+};
+
+const deselectAll = () => {
+  selectedItem.value = null;
+  emit("selectItem", null);
 };
 
 watch(
