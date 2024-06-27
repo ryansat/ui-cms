@@ -81,6 +81,7 @@
           :class="{ selected: selectedItem && selectedItem.id === item.id }"
         >
           {{ item.label || item.name }}
+          <button @click="deleteItem(item.id)">Delete</button>
         </li>
       </ul>
     </div>
@@ -97,7 +98,7 @@ import { ref, defineProps, defineEmits, watch } from "vue";
 import ImageUploadModal from "../common/ImageUploadModal.vue";
 
 const props = defineProps(["selectedItem", "droppedItems"]);
-const emit = defineEmits(["updateProperty", "updateItemsOrder"]);
+const emit = defineEmits(["updateProperty", "updateItemsOrder", "deleteItem"]);
 
 const itemName = ref("");
 const itemLabel = ref("");
@@ -148,6 +149,10 @@ const handleUpload = (imageUrl) => {
     updateProperty("imageUrl", imageUrl);
   }
   hideUploadModal();
+};
+
+const deleteItem = (itemId) => {
+  emit("deleteItem", itemId);
 };
 
 watch(
@@ -220,9 +225,26 @@ watch(
 .layers li {
   padding: 5px;
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .layers li.selected {
   background-color: #ddd;
+}
+
+.layers button {
+  margin-left: 10px;
+  background-color: #ff6666;
+  color: white;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.layers button:hover {
+  background-color: #ff4d4d;
 }
 </style>

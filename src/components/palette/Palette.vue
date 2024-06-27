@@ -13,12 +13,24 @@
         class="item"
       >
         <img
-          v-if="item.imageUrl"
-          :src="item.imageUrl"
-          alt="Image"
+          v-if="item.type === 'table'"
+          src="/tabledata.svg"
+          alt="Table Data"
           class="palette-image"
         />
-        <span v-else>{{ item.name }}</span>
+        <img
+          v-else-if="item.type === 'image'"
+          src="/imageupload.svg"
+          alt="Image Upload"
+          class="palette-image"
+        />
+        <img
+          v-else
+          src="/label.svg"
+          alt="Label"
+          class="palette-image"
+        />
+        <span>{{ item.name }}</span>
       </div>
     </div>
   </div>
