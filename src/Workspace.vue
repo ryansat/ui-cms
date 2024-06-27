@@ -24,6 +24,7 @@
           @update-items="updateDroppedItems"
           @selectItem="selectItem"
           @addItemToPaper="addItemToPaper"
+          @deleteItem="deleteItem"
         />
       </div>
       <div class="properties-panel">
@@ -32,9 +33,17 @@
           :droppedItems="pageData.items"
           @updateProperty="updateProperty"
           @updateItemsOrder="updateItemsOrder"
+          @renameItem="renameItem"
+          @deleteItem="deleteItem"
+          @uploadImage="showImageUploadModal"
         />
       </div>
     </div>
+    <ImageUploadModal
+      :visible="isImageUploadModalVisible"
+      @upload="handleImageUpload"
+      @close="hideImageUploadModal"
+    />
   </div>
 </template>
 
@@ -43,6 +52,7 @@ import Palette from "./components/palette/Palette.vue";
 import Paper from "./components/paper/Paper.vue";
 import PropertiesPanel from "./components/layout/PropertiesPanel.vue";
 import PageControls from "./components/layout/PageControls.vue";
+import ImageUploadModal from "./components/common/ImageUploadModal.vue";
 import { ref } from "vue";
 import { v4 as uuidv4 } from "uuid";
 
@@ -52,6 +62,7 @@ export default {
     Paper,
     PropertiesPanel,
     PageControls,
+    ImageUploadModal,
   },
   props: {
     pageData: Object,
@@ -62,6 +73,7 @@ export default {
     const pageData = ref(pages.value[currentPageIndex.value]);
     const selectedItem = ref(null);
     const paperSize = ref({ width: 210, height: 297 });
+    const isImageUploadModalVisible = ref(false);
 
     const updateDroppedItems = (items) => {
       pageData.value.items = items;
@@ -106,6 +118,42 @@ export default {
       paperSize.value = size;
     };
 
+    const showImageUploadModal = () => {
+      isImageUploadModalVisible.value = true;
+    };
+
+    const hideImageUploadModal = () => {
+      isImageUploadModalVisible.value = false;
+    };
+
+    const handleImageUpload = (imageUrl) => {
+      if (selectedItem.value) {
+        updateProperty("imageUrl", imageUrl);
+      }
+      hideImageUploadModal();
+    };
+
+    const deleteItem = (itemId) => {
+      const index = pageData.value.items.findIndex(
+        (item) => item.id === itemId
+      );
+      if (index !== -1) {
+        pageData.value.items.splice(index, 1);
+        updateDroppedItems(pageData.value.items);
+        if (selectedItem.value && selectedItem.value.id === itemId) {
+          selectedItem.value = null;
+        }
+      }
+    };
+
+    const renameItem = (item) => {
+      const index = pageData.value.items.findIndex((i) => i.id === item.id);
+      if (index !== -1) {
+        pageData.value.items[index].name = item.name;
+        updateDroppedItems(pageData.value.items);
+      }
+    };
+
     return {
       pages,
       currentPageIndex,
@@ -118,6 +166,12 @@ export default {
       updateCurrentPageIndex,
       adjustPageSize,
       updateProperty,
+      isImageUploadModalVisible,
+      showImageUploadModal,
+      handleImageUpload,
+      hideImageUploadModal,
+      deleteItem,
+      renameItem,
     };
   },
 };
@@ -155,7 +209,6 @@ export default {
   background-color: #f0f0f0;
   overflow-y: auto;
   padding: 1em;
-  margin-right: 1em; /* Add margin to the right to create space between palette and paper */
 }
 
 .paper-section {
@@ -170,10 +223,5 @@ export default {
 .paper-section .paper {
   background-color: #fff; /* Paper background color */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
-  margin-left: 1em;
-}
-
-.properties-panel {
-  margin-left: 1em; /* Add margin to the left to create space between paper and properties panel */
 }
 </style>

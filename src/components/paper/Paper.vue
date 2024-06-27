@@ -22,6 +22,8 @@
       }"
       @mousedown.stop="startDrag(item, $event)"
       @click.stop="selectItem(item)"
+      @dragover.prevent="onDragOverItem(item, $event)"
+      @drop="onDropItem(item, $event)"
     >
       <img
         v-if="item.imageUrl"
@@ -56,7 +58,14 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch } from "vue";
+import {
+  ref,
+  defineProps,
+  defineEmits,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+} from "vue";
 
 const props = defineProps({
   droppedItems: {
@@ -68,7 +77,12 @@ const props = defineProps({
     default: () => ({ width: 210, height: 297 }),
   },
 });
-const emit = defineEmits(["update-items", "selectItem", "addItemToPaper"]);
+const emit = defineEmits([
+  "update-items",
+  "selectItem",
+  "addItemToPaper",
+  "deleteItem",
+]);
 
 const selectedItem = ref(null);
 const dragStart = ref({ x: 0, y: 0 });
@@ -152,10 +166,49 @@ const onDrop = (event) => {
   }
 };
 
+const onDragOverItem = (item, event) => {
+  event.preventDefault();
+};
+
+const onDropItem = (item, event) => {
+  const file = event.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      item.imageUrl = e.target.result;
+      emit("update-items", props.droppedItems);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
 const deselectAll = () => {
   selectedItem.value = null;
   emit("selectItem", null);
 };
+
+const deleteItem = (itemId) => {
+  const index = props.droppedItems.findIndex((item) => item.id === itemId);
+  if (index !== -1) {
+    props.droppedItems.splice(index, 1);
+    emit("update-items", props.droppedItems);
+    deselectAll();
+  }
+};
+
+const handleKeyDown = (event) => {
+  if (event.key === "Delete" && selectedItem.value) {
+    deleteItem(selectedItem.value.id);
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("keydown", handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keydown", handleKeyDown);
+});
 
 watch(
   () => props.droppedItems,

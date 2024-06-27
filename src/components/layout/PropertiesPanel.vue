@@ -77,10 +77,13 @@
           @dragstart="onDragStart(index, $event)"
           @dragover.prevent
           @drop="onDrop(index)"
-          @dblclick="editLabel(item)"
           :class="{ selected: selectedItem && selectedItem.id === item.id }"
         >
-          {{ item.label || item.name }}
+          <input
+            v-model="item.name"
+            @change="renameItem(item, item.name)"
+          />
+          <button @click="deleteItem(item.id)">Delete</button>
         </li>
       </ul>
     </div>
@@ -97,7 +100,12 @@ import { ref, defineProps, defineEmits, watch } from "vue";
 import ImageUploadModal from "../common/ImageUploadModal.vue";
 
 const props = defineProps(["selectedItem", "droppedItems"]);
-const emit = defineEmits(["updateProperty", "updateItemsOrder"]);
+const emit = defineEmits([
+  "updateProperty",
+  "updateItemsOrder",
+  "deleteItem",
+  "renameItem",
+]);
 
 const itemName = ref("");
 const itemLabel = ref("");
@@ -143,9 +151,20 @@ const hideUploadModal = () => {
 };
 
 const handleUpload = (imageUrl) => {
-  props.selectedItem.imageUrl = imageUrl;
-  updateProperty("imageUrl", imageUrl);
+  if (props.selectedItem) {
+    props.selectedItem.imageUrl = imageUrl;
+    updateProperty("imageUrl", imageUrl);
+  }
   hideUploadModal();
+};
+
+const renameItem = (item, newName) => {
+  item.name = newName;
+  emit("renameItem", item);
+};
+
+const deleteItem = (itemId) => {
+  emit("deleteItem", itemId);
 };
 
 watch(
@@ -169,7 +188,7 @@ watch(
 
 <style scoped>
 .properties {
-  width: 100%;
+  width: 150%;
   background: #f9f9f9;
   padding: 10px;
   border-radius: 4px;
@@ -221,6 +240,20 @@ watch(
 
 .layers li {
   padding: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.layers li input {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.layers li button {
+  background-color: red;
+  color: white;
+  border: none;
   cursor: pointer;
 }
 
