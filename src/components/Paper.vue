@@ -3,6 +3,10 @@
     class="paper"
     @dragover.prevent
     @drop="onDrop"
+    :style="{
+      width: paperSize.width + 'mm',
+      height: paperSize.height + 'mm',
+    }"
   >
     <div
       v-for="(item, index) in droppedItems"
@@ -53,7 +57,16 @@
 <script setup>
 import { ref, defineProps, defineEmits, watch } from "vue";
 
-const props = defineProps(["droppedItems"]);
+const props = defineProps({
+  droppedItems: {
+    type: Array,
+    default: () => [],
+  },
+  paperSize: {
+    type: Object,
+    default: () => ({ width: 210, height: 297 }),
+  },
+});
 const emit = defineEmits(["update-items", "selectItem", "addItemToPaper"]);
 
 const selectedItem = ref(null);
@@ -147,13 +160,23 @@ watch(
   },
   { deep: true }
 );
+
+watch(
+  () => props.paperSize,
+  (newSize) => {
+    console.log("Paper size updated:", newSize);
+  },
+  { immediate: true, deep: true }
+);
 </script>
 
 <style scoped>
 .paper {
   position: relative;
-  width: 100%;
-  height: 100%;
+  background-color: #fff;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .draggable-item {

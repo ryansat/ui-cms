@@ -1,11 +1,5 @@
 <template>
   <div id="app">
-    <PageControls
-      :pages="pages"
-      :currentPageIndex="currentPageIndex"
-      @updatePages="updatePages"
-      @updateCurrentPageIndex="updateCurrentPageIndex"
-    />
     <Workspace
       :pageData="currentPage"
       @updateItem="updateItem"

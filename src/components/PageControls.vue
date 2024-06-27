@@ -176,6 +176,6 @@ const handleSizeAdjustment = (size) => {
 }
 
 .page-controls button {
-  margin-right: 10px;
+  margin: 5px; /* Add margin between buttons */
 }
 </style>

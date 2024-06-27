@@ -1,28 +1,39 @@
 <template>
   <div class="app-container">
-    <div class="left-panel">
-      <Palette
-        class="palette-section"
-        @addItemToPaper="addItemToPaper"
+    <div class="top-row">
+      <PageControls
+        :pages="pages"
+        :currentPageIndex="currentPageIndex"
+        @updatePages="updatePages"
+        @updateCurrentPageIndex="updateCurrentPageIndex"
+        @adjustPageSize="adjustPageSize"
       />
     </div>
-    <div class="paper-section">
-      <Paper
-        :droppedItems="pageData.items"
-        ref="paperRef"
-        @update-items="updateDroppedItems"
-        @selectItem="selectItem"
-        @addItemToPaper="addItemToPaper"
-        size="A4"
-      />
-    </div>
-    <div class="properties-panel">
-      <PropertiesPanel
-        :selectedItem="selectedItem"
-        :droppedItems="pageData.items"
-        @updateProperty="updateProperty"
-        @updateItemsOrder="updateItemsOrder"
-      />
+    <div class="bottom-row">
+      <div class="left-panel">
+        <Palette
+          class="palette-section"
+          @addItemToPaper="addItemToPaper"
+        />
+      </div>
+      <div class="paper-section">
+        <Paper
+          :droppedItems="pageData.items"
+          :paperSize="paperSize"
+          ref="paperRef"
+          @update-items="updateDroppedItems"
+          @selectItem="selectItem"
+          @addItemToPaper="addItemToPaper"
+        />
+      </div>
+      <div class="properties-panel">
+        <PropertiesPanel
+          :selectedItem="selectedItem"
+          :droppedItems="pageData.items"
+          @updateProperty="updateProperty"
+          @updateItemsOrder="updateItemsOrder"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -31,8 +42,8 @@
 import Palette from "./Palette.vue";
 import Paper from "./Paper.vue";
 import PropertiesPanel from "./PropertiesPanel.vue";
-import { ref, nextTick } from "vue";
-import html2canvas from "html2canvas";
+import PageControls from "./PageControls.vue";
+import { ref } from "vue";
 import { v4 as uuidv4 } from "uuid";
 
 export default {
@@ -40,16 +51,20 @@ export default {
     Palette,
     Paper,
     PropertiesPanel,
+    PageControls,
   },
   props: {
     pageData: Object,
   },
   setup(props, { emit }) {
+    const pages = ref([{ items: [] }]);
+    const currentPageIndex = ref(0);
+    const pageData = ref(pages.value[currentPageIndex.value]);
     const selectedItem = ref(null);
-    const paperRef = ref(null);
+    const paperSize = ref({ width: 210, height: 297 });
 
-    const updateDroppedItems = (updatedItems) => {
-      emit("updateItem", props.pageData.pageIndex, updatedItems);
+    const updateDroppedItems = (items) => {
+      pageData.value.items = items;
     };
 
     const addItemToPaper = (item) => {
@@ -62,117 +77,70 @@ export default {
         height: item.height || 100,
         label: item.label || "",
       };
-      props.pageData.items.push(newItem);
-      updateDroppedItems(props.pageData.items);
+      pageData.value.items.push(newItem);
+      updateDroppedItems(pageData.value.items);
       selectItem(newItem);
     };
 
     const selectItem = (item) => {
       selectedItem.value = item;
-      emit("selectItem", item);
     };
 
     const updateProperty = (property, value) => {
       if (selectedItem.value) {
         selectedItem.value[property] = value;
-        updateDroppedItems(props.pageData.items);
+        updateDroppedItems(pageData.value.items);
       }
     };
 
-    const importLayoutFromJson = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          if (Array.isArray(importedData)) {
-            props.pageData.items = importedData;
-            updateDroppedItems(props.pageData.items);
-          } else {
-            console.error("Invalid JSON format");
-            alert("Invalid JSON format");
-          }
-        } catch (err) {
-          console.error("Error reading JSON:", err);
-          alert("Error reading JSON file");
-        }
-      };
-      reader.readAsText(file);
+    const updatePages = (newPages) => {
+      pages.value = newPages;
     };
 
-    const exportLayoutToJson = async () => {
-      await nextTick();
-      const layoutData = JSON.stringify(props.pageData.items, null, 2);
-      const blob = new Blob([layoutData], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "layout.json";
-      link.click();
-      URL.revokeObjectURL(link.href);
+    const updateCurrentPageIndex = (newIndex) => {
+      currentPageIndex.value = newIndex;
+      pageData.value = pages.value[newIndex];
     };
 
-    const ensureImagesLoaded = async () => {
-      const images = paperRef.value.$el.querySelectorAll("img");
-      const promises = Array.from(images).map((img) => {
-        return new Promise((resolve, reject) => {
-          if (img.complete) {
-            resolve();
-          } else {
-            img.onload = resolve;
-            img.onerror = reject;
-          }
-        });
-      });
-      await Promise.all(promises);
-    };
-
-    const exportAsJPG = async () => {
-      await nextTick();
-      await ensureImagesLoaded();
-      const paperElement = paperRef.value.$el;
-      html2canvas(paperElement, { allowTaint: true, useCORS: true })
-        .then((canvas) => {
-          const dataURL = canvas.toDataURL("image/jpeg");
-          const link = document.createElement("a");
-          link.href = dataURL;
-          link.download = "paper-export.jpg";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        })
-        .catch((error) => {
-          console.error("Error exporting as JPG:", error);
-        });
-    };
-
-    const updateItemsOrder = (newOrder) => {
-      props.pageData.items = newOrder;
-      updateDroppedItems(newOrder);
+    const adjustPageSize = (size) => {
+      paperSize.value = size;
     };
 
     return {
+      pages,
+      currentPageIndex,
+      pageData,
       selectedItem,
-      addItemToPaper,
-      exportAsJPG,
-      paperRef,
-      exportLayoutToJson,
+      paperSize,
       updateDroppedItems,
-      importLayoutFromJson,
-      selectItem,
+      addItemToPaper,
+      updatePages,
+      updateCurrentPageIndex,
+      adjustPageSize,
       updateProperty,
-      updateItemsOrder,
     };
   },
 };
 </script>
 
-<style>
+<style scoped>
 .app-container {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr; /* Create a three-column grid */
+  grid-template-rows: auto 1fr; /* Two rows: auto for top row, 1fr for bottom row */
+  grid-template-columns: 1fr; /* Single column layout */
   height: 100vh;
+  gap: 1em; /* Gap between the rows */
+}
+
+.top-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* Create a three-column grid */
   gap: 1em; /* Gap between the columns */
   align-items: start;
 }
@@ -199,8 +167,6 @@ export default {
 }
 
 .paper-section .paper {
-  width: 210mm; /* Width for A4 paper */
-  height: 297mm; /* Height for A4 paper */
   background-color: #fff; /* Paper background color */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
 }
