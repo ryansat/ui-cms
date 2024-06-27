@@ -212,7 +212,7 @@ export default {
 }
 
 .palette-section {
-  background-color: #f0f0f0;
+  background-color: #000000;
   overflow-y: auto;
   padding: 1em;
   margin-left: 1em; /* Add margin to the left */

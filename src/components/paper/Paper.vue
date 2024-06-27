@@ -59,7 +59,14 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch } from "vue";
+import {
+  ref,
+  defineProps,
+  defineEmits,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+} from "vue";
 
 const props = defineProps({
   droppedItems: {
@@ -207,6 +214,20 @@ const deselectAll = () => {
   selectedItem.value = null;
   emit("selectItem", null);
 };
+
+const onKeydown = (event) => {
+  if (event.key === "Escape") {
+    deselectAll();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("keydown", onKeydown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keydown", onKeydown);
+});
 
 watch(
   () => props.droppedItems,

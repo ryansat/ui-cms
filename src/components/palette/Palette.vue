@@ -78,14 +78,12 @@ export default {
 <style scoped>
 .palette {
   width: 100%;
-  height: 100%;
-  background-color: #f9f9f9;
+  /* background: #f9f9f9; */
   padding: 10px;
   border-radius: 4px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-template-columns: auto 1fr;
   grid-gap: 10px;
-  position: relative;
 }
 
 .item {
